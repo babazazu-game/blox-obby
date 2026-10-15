@@ -27,8 +27,8 @@ import { createScene, type Game } from './game.ts';
  * Ждать чего-либо дольше этого нельзя: игрок смотрит на полосу загрузки.
  * Если SDK не ответил, игра запускается без него — локально это обычное дело.
  */
-// Локально SDK нет вовсе — ждать 8 с при каждой перезагрузке незачем.
-const SDK_DEADLINE_MS = /^(localhost|127.0.0.1)$/.test(location.hostname) ? 800 : 8000;
+// Локально и на GitHub Pages SDK нет вовсе — ждать 8 с при каждой перезагрузке незачем.
+const SDK_DEADLINE_MS = /^(localhost|127.0.0.1)$|github.io$/.test(location.hostname) ? 800 : 8000;
 
 /** Докуда доходит полоса, пока ждём SDK. Дальше её двигают ассеты. */
 const HEAD_START = 0.34;
