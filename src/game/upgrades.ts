@@ -13,7 +13,7 @@ export const UPGRADES: Upgrade[] = [
   { id: 'magnet', name: 'Магнит', icon: '🧲', prices: [60, 150, 300], desc: (l) => `Монеты тянутся к тебе: радиус ${(1.3 + l).toFixed(1)} м` },
   { id: 'piggy', name: 'Копилка', icon: '🐷', prices: [100, 250, 500], desc: (l) => `Монета на трассе стоит ${1 + l}` },
   { id: 'chute', name: 'Парашют', icon: '🪂', prices: [80, 200, 400], desc: (l) => `Упал — вернёшься туда, где стоял, а не на чекпоинт. ${l} раз за забег` },
-  { id: 'spare', name: 'Запасной блок', icon: '🧱', prices: [600], desc: () => '+1 блок на каждом этапе с мостом' },
+  { id: 'spare', name: 'Запасной блок', icon: '🧱', prices: [350], desc: () => '+1 блок на каждом этапе с мостом' },
 ];
 
 export interface PetItem { id: string; name: string; price: number; bonus: number; look: PetLook }

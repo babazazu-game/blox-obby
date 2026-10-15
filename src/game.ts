@@ -49,7 +49,7 @@ export interface Game {
 }
 
 /** Награды: чекпоинт 5, финиш мира 50 + 25 за каждый следующий мир (монета трассы — 1 × бонусы). */
-const COIN_CP = 5, COIN_FINISH = 50;
+const COIN_CP = 5, COIN_FINISH = 50, FIRST_CLEAR = 100;
 /** Упал на столько ниже точки возрождения — возвращаем на неё. */
 const FALL_LIMIT = 20;
 
@@ -295,6 +295,9 @@ export function createScene(parent: HTMLElement): Game {
     fx.emit('confetti', tmp.copy(ctl.pos).setY(ctl.pos.y + 1.5), 2.5);
     addCoins(COIN_FINISH + 25 * wi);
     const id = WORLDS[wi].id, best = { ...progress.get('best') };
+    // первое прохождение мира — бонус: первые миры проходятся один раз,
+    // и без бонуса после них не на что купить даже дешёвый скин
+    if (!best[id]) { addCoins(FIRST_CLEAR); hud.toast(`ПЕРВОЕ ПРОХОЖДЕНИЕ +${FIRST_CLEAR}`, 1800); }
     const record = !best[id] || runTime < best[id];
     if (record) best[id] = runTime;
     const was = progress.get('unlocked');
