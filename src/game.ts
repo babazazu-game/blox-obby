@@ -494,6 +494,15 @@ export function createScene(parent: HTMLElement): Game {
       await sfx.load();
       onProgress(0.6);
       await renderer.compileAsync(scene, cam.camera);
+      // Шейдеров мало — дольше всего грузится ГЕОМЕТРИЯ: склеенные трассы и декор
+      // уходят в видеокарту при первом попадании в кадр, и поворот камеры дёргался.
+      // Один кадр «всё видно» (без отсечения) в маленькую цель — всё загружено заранее.
+      const culled: THREE.Object3D[] = [];
+      scene.traverse((o) => { if (o.frustumCulled) { culled.push(o); o.frustumCulled = false; } });
+      const rt = new THREE.WebGLRenderTarget(64, 64);
+      renderer.setRenderTarget(rt); renderer.render(scene, cam.camera); renderer.setRenderTarget(null);
+      rt.dispose();
+      for (const o of culled) o.frustumCulled = true;
       for (const o of hidden) o.visible = false;
       scene.remove(warm);
       onProgress(1);
