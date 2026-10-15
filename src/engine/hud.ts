@@ -1,5 +1,8 @@
-import '@fontsource/rubik/700.css';
-import '@fontsource/rubik/900.css';
+// только кириллица и латиница: полный набор тянул ещё арабский, иврит и т.д.
+import '@fontsource/rubik/cyrillic-700.css';
+import '@fontsource/rubik/cyrillic-900.css';
+import '@fontsource/rubik/latin-700.css';
+import '@fontsource/rubik/latin-900.css';
 import { safeInsets } from 'yg-core';
 import { coinIconUrl } from './textures.ts';
 import { L } from '../i18n.ts';

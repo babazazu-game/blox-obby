@@ -17,9 +17,10 @@ export type SfxName = 'jump' | 'land' | 'click' | 'denied' | 'place' | 'remove' 
 const NAMES: SfxName[] = ['jump', 'land', 'click', 'denied', 'place', 'remove', 'bounce', 'lava', 'checkpoint', 'coin', 'finish', 'respawn'];
 const VOLUME: Partial<Record<SfxName, number>> = { land: 0.45, jump: 0.55, click: 0.6, finish: 0.8, coin: 0.5 };   // монета — вдвое тише (просьба пользователя)
 
-/** Музыка — Opus (на ~30% легче mp3 того же качества); старые Safari без Opus получают mp3. */
-const MUSIC_EXT = (() => {
-  try { return document.createElement('audio').canPlayType('audio/ogg; codecs=opus') ? 'ogg' : 'mp3'; } catch { return 'mp3'; }
+/** Музыка — только Opus 48k (6 треков ≈ 6 МБ). Запасные mp3 удвоили бы архив (+11 МБ);
+ *  браузер без Opus (Safari старше 18.4) играет без музыки — звуки остаются. */
+const MUSIC_OK = (() => {
+  try { return !!document.createElement('audio').canPlayType('audio/ogg; codecs=opus'); } catch { return false; }
 })();
 
 class Sfx {
@@ -101,7 +102,7 @@ class Sfx {
 
   // 6 треков (по 2 на каждый промпт); база 0.256 = 0.32 − 20% (просьба пользователя)
   async startMusic(count = 6): Promise<void> {
-    if (!this.ctx || !this.master || this.musicOn) return;
+    if (!this.ctx || !this.master || this.musicOn || !MUSIC_OK) return;
     this.musicOn = true;
     this.musicGain = this.ctx.createGain();
     this.musicGain.gain.value = this.musicVol * Sfx.MUSIC_BASE;
@@ -115,7 +116,7 @@ class Sfx {
     if (count > 1 && i === this.lastTrack) i = (i + 1) % count;
     this.lastTrack = i;
     try {
-      const res = await fetch(`./assets/music/music${i + 1}.${MUSIC_EXT}`);
+      const res = await fetch(`./assets/music/music${i + 1}.ogg`);
       if (!res.ok) throw new Error('нет трека');
       const buf = await ctx.decodeAudioData(await res.arrayBuffer());
       const src = ctx.createBufferSource();

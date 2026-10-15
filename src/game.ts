@@ -112,16 +112,16 @@ export function createScene(parent: HTMLElement): Game {
     skins: new Stall(scene, physics, ...stallAt(HALF(6)), 0xff7a2f, L('Скины', 'Skins'), '👕'),
     upg: new Stall(scene, physics, ...stallAt(HALF(0)), 0x2a74e8, L('Улучшения', 'Upgrades'), '⚡'),
     pets: new Stall(scene, physics, ...stallAt(HALF(2)), 0x9b59d0, L('Питомцы', 'Pets'), '🐾'),
-    trails: new Stall(scene, physics, ...stallAt(HALF(3)), 0xff6fb5, L('Следы', 'Trails'), '✨'),
+    trails: new Stall(scene, physics, ...stallAt(HALF(4)), 0xff6fb5, L('Следы', 'Trails'), '✨'),
   };
   const chest = new Chest(scene, physics, ring(HALF(1), 7));
   const board = textSprite([L('РЕКОРДЫ', 'RECORDS')], { w: 512, h: 400 });
   board.scale.set(5, 3.9, 1);
-  board.position.copy(ring(HALF(4), 19)).setY(3.6);
+  board.position.copy(ring(HALF(5), 19)).setY(3.6);
   scene.add(board);
   {
     const post = block({ x: 0.3, y: 1.6, z: 0.3 }, 0x444a52);
-    post.position.copy(ring(HALF(4), 19)).setY(0.8); post.userData.static = true; scene.add(post);
+    post.position.copy(ring(HALF(5), 19)).setY(0.8); post.userData.static = true; scene.add(post);
   }
 
   {
