@@ -6,3 +6,4 @@ build/
 .env.local
 .claude/settings.local.json
 art/music_src/
+art/store/shots/

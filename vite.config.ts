@@ -1,7 +1,30 @@
 import { defineConfig } from 'vite';
 import { fileURLToPath } from 'node:url';
+import fs from 'node:fs';
+import path from 'node:path';
+
+/** Только для разработки: POST /__shot?name=x.png (dataURL в теле) → art/store/shots/x.png.
+ *  Так снимаются скриншоты для витрин прямо из игры в нужном размере. */
+const shotSaver = {
+  name: 'shot-saver',
+  apply: 'serve' as const,
+  configureServer(server: { middlewares: { use: (p: string, fn: (req: any, res: any) => void) => void } }) {
+    server.middlewares.use('/__shot', (req, res) => {
+      let body = '';
+      req.on('data', (c: Buffer) => (body += c));
+      req.on('end', () => {
+        const name = path.basename(new URL(req.url, 'http://x').searchParams.get('name') || 'shot.png');
+        const dir = path.resolve('art/store/shots');
+        fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(path.join(dir, name), Buffer.from(body.split(',')[1], 'base64'));
+        res.end('ok');
+      });
+    });
+  },
+};
 
 export default defineConfig({
+  plugins: [shotSaver],
   resolve: {
     alias: {
       // Каркас подключается ИСХОДНИКАМИ, а не собранным пакетом.
