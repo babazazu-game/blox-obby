@@ -1,5 +1,5 @@
 {
-  "name": "base-three",
+  "name": "blox-obby",
   "private": true,
   "version": "0.0.1",
   "type": "module",
@@ -11,6 +11,7 @@
     "zip": "npm run build && python tools/make_zip.py"
   },
   "dependencies": {
+    "@fontsource/rubik": "^5.3.0",
     "three": "^0.185.1"
   },
   "devDependencies": {

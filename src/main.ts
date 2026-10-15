@@ -17,7 +17,7 @@
  */
 
 
-import { pixelRatio, showFpsMeter, splashCaption, splashHide, splashProgress } from 'yg-core';
+import { pixelRatio, splashCaption, splashHide, splashProgress } from 'yg-core';
 import { core } from './core.ts';
 import { t } from './i18n.ts';
 import { showStickyBanner } from './ads.ts';
@@ -27,7 +27,8 @@ import { createScene, type Game } from './game.ts';
  * Ждать чего-либо дольше этого нельзя: игрок смотрит на полосу загрузки.
  * Если SDK не ответил, игра запускается без него — локально это обычное дело.
  */
-const SDK_DEADLINE_MS = 8000;
+// Локально SDK нет вовсе — ждать 8 с при каждой перезагрузке незачем.
+const SDK_DEADLINE_MS = /^(localhost|127.0.0.1)$/.test(location.hostname) ? 800 : 8000;
 
 /** Докуда доходит полоса, пока ждём SDK. Дальше её двигают ассеты. */
 const HEAD_START = 0.34;
@@ -53,7 +54,7 @@ async function boot(): Promise<void> {
   const game = createScene(parent);
 
   watchSize(game, parent);
-  showFpsMeter(() => `холст ${game.renderer.domElement.width}x${game.renderer.domElement.height}`);
+  // Счётчик кадров — свой, игровой (engine/fps.ts): каркасный налезал на плашку этапа.
 
   await game.load((value) => splashProgress(HEAD_START + (1 - HEAD_START) * value));
 

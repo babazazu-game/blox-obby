@@ -21,7 +21,7 @@
   -->
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title><!-- НАЗВАНИЕ ИГРЫ --></title>
+  <title>Обби: Блок за блоком</title>
   <link rel="icon" href="./favicon.ico" sizes="16x16 32x32">
 
   <!--
@@ -54,7 +54,7 @@
       height: 100%;
       height: 100dvh;
       overflow: hidden;
-      background: #E8DCC8;          /* ЦВЕТ ФОНА ИГРЫ */
+      background: #4aa8f0;          /* ЦВЕТ ФОНА ИГРЫ — небо */
       /* Блокируем swipe-to-refresh и прокрутку (п. 1.10.2).
          `touch-action: none` на html/body — сознательно, хотя в общем случае
          так делать не стоит: он душит прокрутку на iOS. Если весь интерфейс
@@ -82,74 +82,81 @@
 
       Управляется из `yg-core`: splashProgress / splashCaption / splashHide.
     */
+    /* Экран загрузки в стиле игры: небо, кубики падают и строят башню,
+       на верх прыгает голова-роблоксовец. Всё разметкой — картинок не ждём. */
     #splash {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 5vmin;
-      background: #E8DCC8;          /* ТОТ ЖЕ ЦВЕТ, ЧТО У ФОНА */
-      z-index: 10;
+      position: absolute; inset: 0; z-index: 10;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 4vmin; overflow: hidden;
+      background: linear-gradient(#4aa8f0, #9fd6ff 70%, #d8f0ff);
       transition: opacity .32s ease;
+      font-family: Rubik, "Arial Black", system-ui, sans-serif;
     }
     #splash.done { opacity: 0; pointer-events: none; }
+    .sp-cloud { position: absolute; background: #fff; border-radius: 1.4vmin; opacity: .9;
+      box-shadow: 0 1vmin 0 rgba(120,170,220,.35); animation: drift 14s linear infinite; }
+    .sp-cloud.c1 { width: 22vmin; height: 7vmin; top: 12%; left: -25vmin; }
+    .sp-cloud.c2 { width: 15vmin; height: 5vmin; top: 70%; left: -25vmin; animation-duration: 19s; animation-delay: -9s; }
+    .sp-cloud.c3 { width: 28vmin; height: 8vmin; top: 30%; left: -30vmin; animation-duration: 24s; animation-delay: -16s; }
+    @keyframes drift { to { transform: translateX(140vw); } }
 
-    /* ФИГУРА ИГРЫ. Рисуется разметкой намеренно: ждать загрузки картинки
-       на экране загрузки было бы странно. Заменить на свою. */
-    #splash-mark {
-      width: 22vmin;
-      height: 22vmin;
-      max-width: 140px;
-      max-height: 140px;
-      border-radius: 42% 58% 54% 46% / 48% 44% 56% 52%;
-      background: radial-gradient(circle at 34% 30%, #8fd06a, #5aa542 62%, #46853a);
-      box-shadow: 0 .8vmin 0 rgba(74, 55, 40, .18);
-      animation: pulse 1.5s ease-in-out infinite;
+    #splash-mark { position: relative; width: 22vmin; height: 25vmin; max-width: 200px; max-height: 230px; }
+    .sp-cube { position: absolute; left: 50%; width: 32%; aspect-ratio: 1; margin-left: -16%;
+      border-radius: 14%; border: .6vmin solid rgba(0,0,0,.25);
+      box-shadow: inset 0 -1.2vmin 0 rgba(0,0,0,.18), inset 0 .8vmin 0 rgba(255,255,255,.35);
+      animation: drop 2.4s cubic-bezier(.5,0,.6,1.4) infinite both; }
+    .sp-cube.k1 { bottom: 0;   background: #4fc65a; animation-delay: 0s; }
+    .sp-cube.k2 { bottom: 32%; background: #3d8cf0; animation-delay: .25s; }
+    .sp-cube.k3 { bottom: 64%; background: #ff8a2a; animation-delay: .5s; }
+    @keyframes drop {
+      0% { transform: translateY(-60vh) rotate(-25deg); opacity: 0; }
+      12% { opacity: 1; }
+      30%, 85% { transform: translateY(0) rotate(0); opacity: 1; }
+      100% { transform: translateY(0) scale(.6); opacity: 0; }
     }
-    @keyframes pulse {
-      0%, 100% { transform: scale(1) rotate(-3deg); }
-      50%      { transform: scale(1.08) rotate(3deg); }
+    /* голова: жёлтый скруглённый цилиндр с глазами-точками и улыбкой, как у настоящего Роблокса */
+    .sp-head { position: absolute; left: 50%; bottom: 96%; width: 28%; height: 24%; margin-left: -14%;
+      background: #ffd23a; border-radius: 30% / 40%; border: .6vmin solid #c79a12;
+      box-shadow: inset 0 -.9vmin 0 rgba(0,0,0,.12);
+      animation: hop 2.4s ease-in-out infinite both; }
+    .sp-head::before { content: ""; position: absolute; left: 28%; top: 30%; width: 13%; height: 22%;
+      background: #222; border-radius: 50%; box-shadow: 3.4vmin 0 0 #222; }
+    .sp-head::after { content: ""; position: absolute; left: 30%; top: 58%; width: 40%; height: 20%;
+      border: .5vmin solid #222; border-top: 0; border-radius: 0 0 2vmin 2vmin; }
+    @keyframes hop {
+      0%, 40% { transform: translateY(-60vh); opacity: 0; }
+      55% { transform: translateY(0); opacity: 1; }
+      62% { transform: translateY(-3vmin); }
+      70%, 85% { transform: translateY(0); opacity: 1; }
+      100% { opacity: 0; }
     }
-    /* Уважаем системную настройку «меньше движения». */
-    @media (prefers-reduced-motion: reduce) {
-      #splash-mark { animation: none; }
-    }
+    @media (prefers-reduced-motion: reduce) { .sp-cube, .sp-head, .sp-cloud { animation: none; } }
 
-    #splash-bar {
-      width: 56vmin;
-      max-width: 360px;
-      height: 2.6vmin;
-      min-height: 12px;
-      max-height: 18px;
-      border-radius: 999px;
-      background: rgba(74, 55, 40, .16);
-      overflow: hidden;
-    }
-    #splash-fill {
-      width: 0;
-      height: 100%;
-      border-radius: 999px;
-      background: #F5C518;          /* АКЦЕНТНЫЙ ЦВЕТ ИГРЫ */
-      transition: width .2s ease;
-    }
-    #splash-text {
-      font: 700 clamp(14px, 3.2vmin, 22px)/1.2 system-ui, sans-serif;
-      color: #6B5237;
-      letter-spacing: .02em;
-      /* Пусто до тех пор, пока не известен язык: подписать сначала не тем
-         языком, а через секунду переписать — ровно то, за что площадка
-         делает замечание по п. 2.14. Полоса всё это время уже идёт. */
-      min-height: 1.2em;
-    }
+    #splash-title { color: #fff; font-weight: 900; text-align: center; line-height: .95;
+      font-size: clamp(30px, 10vmin, 72px); transform: rotate(-2deg);
+      text-shadow: 0 .8vmin 0 #1b3a7a, 0 0 .6vmin #1b3a7a; }
+    #splash-title small { display: block; font-size: .45em; color: #ffd23a;
+      text-shadow: 0 .5vmin 0 #b0520a, 0 0 .5vmin #b0520a; }
+
+    #splash-logo { width: min(80vmin, 520px); height: auto; filter: drop-shadow(0 1vmin 1.4vmin rgba(0,0,0,.3)); }
+    /* полоса — «стройка» из блоков: блоки поверх непрерывной заливки */
+    #splash-bar { width: 60vmin; max-width: 380px; height: 4.4vmin; min-height: 20px; max-height: 30px;
+      border-radius: 1.4vmin; background: rgba(20,50,110,.35); border: .6vmin solid #fff;
+      box-shadow: 0 .7vmin 0 #1b3a7a; overflow: hidden; }
+    #splash-fill { width: 0; height: 100%; transition: width .2s ease;
+      background: repeating-linear-gradient(90deg, #ffd23a 0 calc(10% - 3px), #e8a80c calc(10% - 3px) 10%);
+      background-size: 60vmin 100%; box-shadow: inset 0 -.8vmin 0 rgba(0,0,0,.15); }
+    #splash-text { font-weight: 800; font-size: clamp(14px, 3.4vmin, 22px); color: #fff;
+      text-shadow: 0 .4vmin 0 #1b3a7a; min-height: 1.2em; }
   </style>
 </head>
 <body>
   <div id="game"></div>
 
   <div id="splash">
-    <div id="splash-mark"></div>
+    <div class="sp-cloud c1"></div><div class="sp-cloud c2"></div><div class="sp-cloud c3"></div>
+    <div id="splash-mark"><div class="sp-cube k1"></div><div class="sp-cube k2"></div><div class="sp-cube k3"></div><div class="sp-head"></div></div>
+    <img id="splash-logo" src="./assets/logo.webp" alt="Обби: Блок за блоком">
     <div id="splash-bar"><div id="splash-fill"></div></div>
     <div id="splash-text"></div>
   </div>

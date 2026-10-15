@@ -1,0 +1,13 @@
+saved D:\work\CLAUDE\GAME\Blox Obby\art\styles\s1_classic.png (1591749 bytes)
+(node:37704) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+saved D:\work\CLAUDE\GAME\Blox Obby\art\styles\s2_candy.png (1917504 bytes)
+(node:43244) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+saved D:\work\CLAUDE\GAME\Blox Obby\art\styles\s3_neon.png (2258598 bytes)
+(node:42800) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+saved D:\work\CLAUDE\GAME\Blox Obby\art\styles\s4_voxel.png (2095678 bytes)
+(node:40204) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+DONE
