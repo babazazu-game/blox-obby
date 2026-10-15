@@ -17,7 +17,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
  */
 
 export type AvatarState = 'idle' | 'run' | 'jump' | 'fall';
-export type Hair = 'none' | 'short' | 'spiky' | 'long' | 'cap' | 'beanie';
+export type Hair = 'none' | 'short' | 'spiky' | 'long' | 'cap' | 'beanie' | 'ponytail' | 'pigtails' | 'bun' | 'bob' | 'bow';
 export type Face = 'smile' | 'grin' | 'cool' | 'happy';
 
 export interface AvatarLook {
@@ -177,6 +177,40 @@ function hair(kind: Hair, color: number, hat: number): THREE.Group {
       g.add(mesh(rbox(1.4 * U, 0.44 * U, 1.4 * U, 0.2), color, 0, top - 0.02));
       g.add(mesh(rbox(1.42 * U, 1.9 * U, 0.42 * U, 0.16), color, 0, top - 0.95 * U, -0.52 * U));
       for (const x of [-0.6, 0.6]) g.add(mesh(rbox(0.24 * U, 1.1 * U, 1.0 * U, 0.1), color, x * U, top - 0.55 * U, -0.1 * U));
+      break;
+    // девчачьи причёски; hat — цвет резинок/банта
+    case 'ponytail':
+      g.add(mesh(rbox(1.4 * U, 0.44 * U, 1.4 * U, 0.2), color, 0, top - 0.02));
+      g.add(mesh(rbox(1.42 * U, 0.8 * U, 0.4 * U, 0.14), color, 0, top - 0.35 * U, -0.52 * U));
+      g.add(mesh(rbox(0.3 * U, 0.3 * U, 0.3 * U, 0.1), hat, 0, top + 0.05 * U, -0.8 * U));
+      g.add(mesh(rbox(0.42 * U, 1.3 * U, 0.42 * U, 0.16), color, 0, top - 0.6 * U, -0.95 * U));
+      break;
+    case 'pigtails':
+      g.add(mesh(rbox(1.4 * U, 0.44 * U, 1.4 * U, 0.2), color, 0, top - 0.02));
+      g.add(mesh(rbox(1.42 * U, 0.8 * U, 0.4 * U, 0.14), color, 0, top - 0.35 * U, -0.52 * U));
+      for (const x of [-1, 1]) {
+        g.add(mesh(rbox(0.3 * U, 0.3 * U, 0.3 * U, 0.1), hat, x * 0.78 * U, top - 0.1 * U, -0.25 * U));
+        g.add(mesh(rbox(0.4 * U, 1.1 * U, 0.4 * U, 0.16), color, x * 0.95 * U, top - 0.65 * U, -0.25 * U));
+      }
+      break;
+    case 'bun':
+      g.add(mesh(rbox(1.38 * U, 0.42 * U, 1.38 * U, 0.2), color, 0, top - 0.02));
+      g.add(mesh(rbox(1.4 * U, 0.6 * U, 0.38 * U, 0.14), color, 0, top - 0.25 * U, -0.52 * U));
+      g.add(mesh(cached('bun', () => new THREE.SphereGeometry(0.4 * U, 16, 10)), color, 0, top + 0.45 * U, -0.15 * U));
+      g.add(mesh(rbox(0.7 * U, 0.14 * U, 0.7 * U, 0.05), hat, 0, top + 0.18 * U, -0.15 * U));
+      break;
+    case 'bob':
+      g.add(mesh(rbox(1.44 * U, 0.46 * U, 1.44 * U, 0.2), color, 0, top - 0.02));
+      g.add(mesh(rbox(1.46 * U, 1.0 * U, 0.42 * U, 0.16), color, 0, top - 0.45 * U, -0.52 * U));
+      for (const x of [-0.62, 0.62]) g.add(mesh(rbox(0.26 * U, 0.95 * U, 1.1 * U, 0.1), color, x * U, top - 0.42 * U, -0.05 * U));
+      g.add(mesh(rbox(1.3 * U, 0.3 * U, 0.2 * U, 0.08), color, 0, top - 0.12 * U, 0.62 * U));   // чёлка
+      break;
+    case 'bow':
+      g.add(mesh(rbox(1.4 * U, 0.44 * U, 1.4 * U, 0.2), color, 0, top - 0.02));
+      g.add(mesh(rbox(1.42 * U, 1.9 * U, 0.42 * U, 0.16), color, 0, top - 0.95 * U, -0.52 * U));
+      for (const x of [-0.6, 0.6]) g.add(mesh(rbox(0.24 * U, 1.1 * U, 1.0 * U, 0.1), color, x * U, top - 0.55 * U, -0.1 * U));
+      for (const x of [-1, 1]) g.add(mesh(rbox(0.45 * U, 0.4 * U, 0.2 * U, 0.12), hat, x * 0.32 * U, top + 0.28 * U, 0.1 * U));
+      g.add(mesh(rbox(0.2 * U, 0.22 * U, 0.22 * U, 0.06), hat, 0, top + 0.28 * U, 0.1 * U));
       break;
     case 'cap':
       g.add(mesh(rbox(1.4 * U, 0.5 * U, 1.4 * U, 0.22), hat, 0, top + 0.05));

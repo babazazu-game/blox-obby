@@ -76,6 +76,7 @@ function renderPreviews(items: ShopItem[]): void {
 
 export class Shop {
   private el: HTMLDivElement;
+  private page = 0;
 
   constructor(parent: HTMLElement, private items: ShopItem[], private state: () => ShopState,
     private onBuy: (id: string) => boolean, private onSelect: (id: string) => void, private onClose: () => void,
@@ -103,8 +104,15 @@ export class Shop {
     // БЕЗ прокрутки: сетка подбирается под экран — в ландшафте 5 в ряд, в портрете 3,
     // строки делят высоту поровну, портрет в карточке сжимается. Прокрутка в игре
     // недопустима (правило пользователя): на телефоне её путают с поворотом камеры.
-    const cols = innerWidth >= innerHeight ? Math.min(5, this.items.length) : 3;
-    const rows = Math.ceil(this.items.length / cols);
+    // Товаров больше, чем влезает, — страницы со стрелками (а не прокрутка):
+    // в ландшафте 5×2, в портрете 3×3.
+    const land = innerWidth >= innerHeight;
+    const per = land ? 10 : 9;
+    const pages = Math.ceil(this.items.length / per);
+    this.page = Math.min(this.page, pages - 1);
+    const shown = this.items.slice(this.page * per, this.page * per + per);
+    const cols = land ? Math.min(5, this.items.length) : 3;
+    const rows = Math.ceil((pages > 1 ? per : shown.length) / cols);
     box.style.setProperty('--cols', String(cols));
     box.style.setProperty('--rows', String(rows));
     box.innerHTML = `<div class="shop-head"><span class="shop-title">${this.t.title}</span><span class="shop-coins">${coinHtml()}${s.coins}</span></div>`;
@@ -112,9 +120,22 @@ export class Shop {
     x.className = 'shop-x'; x.textContent = '✕'; x.title = this.t.close;
     x.addEventListener('click', () => this.close());
     box.appendChild(x);
+    if (pages > 1) {
+      const nav = document.createElement('div');
+      nav.className = 'shop-nav';
+      const arrow = (txt: string, d: number) => {
+        const b = document.createElement('button');
+        b.textContent = txt; b.disabled = this.page + d < 0 || this.page + d >= pages;
+        b.addEventListener('click', () => { this.page += d; this.render(); });
+        return b;
+      };
+      const lbl = document.createElement('span'); lbl.textContent = `${this.page + 1} / ${pages}`;
+      nav.append(arrow('◀', -1), lbl, arrow('▶', 1));
+      box.querySelector('.shop-head')!.insertBefore(nav, box.querySelector('.shop-coins'));
+    }
     const grid = document.createElement('div');
     grid.className = 'shop-grid';
-    for (const it of this.items) {
+    for (const it of shown) {
       const card = document.createElement('div');
       const b = document.createElement('button');
       if (it.prices) {
@@ -167,6 +188,9 @@ function injectCss(): void {
 .shop-coins{font-size:max(16px,calc(var(--u)*24));color:#1b2433}
 .shop i{font-style:normal;color:#ffb800}
 .shop-x{position:absolute;right:calc(var(--u)*12);top:calc(var(--u)*12);width:max(44px,calc(var(--u)*46));height:max(44px,calc(var(--u)*46));border:0;border-radius:50%;background:#e8403a;color:#fff;font:900 max(18px,calc(var(--u)*22)) Rubik,Arial;cursor:pointer;box-shadow:0 4px 0 #a82a22}
+.shop-nav{display:flex;align-items:center;gap:calc(var(--u)*8);font-weight:900;font-size:max(14px,calc(var(--u)*18));color:#1b2433}
+.shop-nav button{width:max(40px,calc(var(--u)*42));height:max(36px,calc(var(--u)*36));border:0;border-radius:calc(var(--u)*10);background:#3d8cf0;color:#fff;font:900 max(14px,calc(var(--u)*16)) Rubik,Arial;box-shadow:0 4px 0 #1f5fb8;cursor:pointer}
+.shop-nav button:disabled{opacity:.35}
 .shop-grid{flex:1;min-height:0;overflow:hidden;display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));grid-template-rows:repeat(var(--rows),minmax(0,1fr));gap:calc(var(--u)*10);padding:calc(var(--u)*4)}
 .shop-card{min-height:0;display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*3);padding:calc(var(--u)*6);border-radius:calc(var(--u)*16);background:linear-gradient(#e9f3ff,#cfe3ff);border:3px solid transparent}
 .shop-card.worn{border-color:#3ad15a;background:linear-gradient(#eafff0,#c9f5d6)}

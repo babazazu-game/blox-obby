@@ -46,7 +46,7 @@ export class Input {
   private base: HTMLDivElement;
   private jumpBtn: HTMLDivElement;
 
-  constructor(el: HTMLElement) {
+  constructor(private el: HTMLElement) {
     addEventListener('keydown', (e) => {
       if (!ALLOWED_KEYS.has(e.code)) return;
       if (NO_SCROLL.has(e.code)) e.preventDefault();
@@ -96,6 +96,10 @@ export class Input {
   }
 
   private onTouch(e: TouchEvent, phase: 'start' | 'move' | 'end'): void {
+    // Касание кнопок интерфейса (меню, магазин, настройки) — не наше: preventDefault
+    // здесь гасил их click, и на телефоне «Играть» не нажималось.
+    const tg = e.target as HTMLElement;
+    if (tg !== this.el && tg.tagName !== 'CANVAS' && !this.ui.contains(tg)) return;
     e.preventDefault();
     if (!this.state.touch) { this.state.touch = true; this.ui.classList.add('on'); }
     const jr = this.jumpBtn.getBoundingClientRect();
