@@ -6,6 +6,6 @@ cd "$(dirname "$0")/.."
 npm run build
 cd dist
 touch .nojekyll
-rm -rf .git && git init -q -b gh-pages && git add -A && git commit -qm "deploy $(date +%F_%T)"
+rm -rf .git && git init -q -b gh-pages && git add -A && git -c user.name="$(git -C .. config user.name)" -c user.email="$(git -C .. config user.email)" commit -qm "deploy $(date +%F_%T)"
 git push -qf "$(git -C .. remote get-url origin)" gh-pages
 rm -rf .git
