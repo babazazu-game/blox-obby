@@ -40,8 +40,9 @@ class Sfx {
       this.sfxGain.connect(this.master);
     } catch { return; }   // браузер без Web Audio — играем без звука
     core.audio.setHandlers({
-      onSuspend: () => this.master && (this.master.gain.value = 0),
-      onResume: () => this.master && (this.master.gain.value = 1),
+      // не только тишина, но и остановка контекста: площадка проверяет, что AudioContext не «running»
+      onSuspend: () => { if (this.master) this.master.gain.value = 0; void this.ctx?.suspend(); },
+      onResume: () => { if (this.master) this.master.gain.value = 1; void this.ctx?.resume(); },
     });
     // Браузер не даёт звучать до первого касания: будим контекст на первом жесте.
     const unlock = () => { void this.ctx?.resume(); };

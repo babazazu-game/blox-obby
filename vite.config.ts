@@ -23,8 +23,14 @@ const shotSaver = {
   },
 };
 
+/** Vite ставит crossorigin на скрипты — CDN Яндекса с ним блокирует бандл (nosniff+CORS). Убираем. */
+const noCrossorigin = {
+  name: 'no-crossorigin',
+  transformIndexHtml: { order: 'post' as const, handler: (html: string) => html.replace(/ crossorigin(="[^"]*")?/g, '') },
+};
+
 export default defineConfig({
-  plugins: [shotSaver],
+  plugins: [shotSaver, noCrossorigin],
   resolve: {
     alias: {
       // Каркас подключается ИСХОДНИКАМИ, а не собранным пакетом.
