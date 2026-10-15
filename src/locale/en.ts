@@ -1,6 +1,6 @@
 /** English dictionary. Key order must match ru.ts — see the note there. */
 export const EN = {
-  title: 'Game title',
+  title: 'Obby: Block by Block',
   loading: 'Loading…',
 
   'menu.play': 'PLAY',

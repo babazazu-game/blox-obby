@@ -2,6 +2,7 @@ import '@fontsource/rubik/700.css';
 import '@fontsource/rubik/900.css';
 import { safeInsets } from 'yg-core';
 import { coinIconUrl } from './textures.ts';
+import { L } from '../i18n.ts';
 
 let coinUrl = '';
 
@@ -41,6 +42,8 @@ export interface FinishStats {
   stars: number;
   line: string;
   next: string;
+  /** Кнопка награды за ролик (×2 монеты): onClick → true, если награда выдана. */
+  bonus?: { label: string; onClick: () => Promise<boolean> };
 }
 
 export class Hud {
@@ -122,12 +125,24 @@ export class Hud {
   /** Виден ли игровой HUD (в меню прячем). */
   showHud(on: boolean): void { this.root.style.display = on ? '' : 'none'; }
 
+  private skipBtn: HTMLButtonElement | null = null;
+  /** Кнопка «пропустить этап за ролик»: label = null — спрятать. */
+  showSkip(label: string | null, onClick?: () => void): void {
+    if (!label) { this.skipBtn?.remove(); this.skipBtn = null; return; }
+    if (this.skipBtn) return;
+    const b = el('button', 'hud-skip') as HTMLButtonElement;
+    b.textContent = label;
+    b.addEventListener('pointerdown', (e) => { e.stopPropagation(); onClick?.(); });
+    this.root.appendChild(b);
+    this.skipBtn = b;
+  }
+
   showMenu(o: MenuOpts, onPlay: () => void): void {
     this.overlay.style.visibility = '';
     this.overlay.innerHTML = '';
     const box = el('div', 'hud-menu');
     // логотип — картинка (нарисована Codex); не загрузилась — остаётся текстовый заголовок
-    box.innerHTML = `<div class="hud-logo"><img src="./assets/logo.webp" alt="" onerror="this.remove()"><div class="l1">${o.title1}</div><div class="l2">${o.title2}</div></div>`;
+    box.innerHTML = `<div class="hud-logo"><img src="${L('./assets/logo.webp', './assets/logo_en.webp')}" alt="" onerror="this.remove()"><div class="l1">${o.title1}</div><div class="l2">${o.title2}</div></div>`;
     box.querySelector('img')!.addEventListener('load', (e) => (e.target as HTMLElement).parentElement!.classList.add('img'));
     const play = el('button', 'hud-play');
     play.textContent = o.play;
@@ -155,6 +170,16 @@ export class Hud {
     const next = el('button', 'hud-play');
     next.textContent = f.next;
     next.addEventListener('click', () => { this.overlay.classList.remove('on'); onNext(); });
+    if (f.bonus) {
+      const bonus = f.bonus;
+      const b = el('button', 'hud-play hud-ad');
+      b.textContent = bonus.label;
+      b.addEventListener('click', async () => {
+        b.disabled = true;
+        if (await bonus.onClick()) b.remove(); else b.disabled = false;
+      });
+      card.appendChild(b);
+    }
     card.appendChild(next);
     this.overlay.appendChild(card);
     this.overlay.classList.add('on');
@@ -176,8 +201,8 @@ export class Hud {
     s.style.setProperty('--u', uiUnit().toFixed(3) + 'px');
     s.innerHTML = '';
     const card = el('div', 'hud-set-card');
-    card.innerHTML = '<h3>НАСТРОЙКИ</h3>';
-    for (const [kind, label] of [['sfx', '🔊 Звуки'], ['music', '🎵 Музыка']] as const) {
+    card.innerHTML = `<h3>${L('НАСТРОЙКИ', 'SETTINGS')}</h3>`;
+    for (const [kind, label] of [['sfx', L('🔊 Звуки', '🔊 Sounds')], ['music', L('🎵 Музыка', '🎵 Music')]] as const) {
       const row = el('label', 'hud-set-row');
       const name = el('span', ''); name.textContent = label;
       const val = el('b', ''); val.textContent = Math.round(this.vols[kind] * 100) + '%';
@@ -191,7 +216,7 @@ export class Hud {
       row.append(name, range, val);
       card.appendChild(row);
     }
-    const ok = el('button', 'hud-play hud-set-ok'); ok.textContent = 'ГОТОВО';
+    const ok = el('button', 'hud-play hud-set-ok'); ok.textContent = L('ГОТОВО', 'DONE');
     ok.addEventListener('click', () => s.classList.remove('on'));
     card.appendChild(ok);
     s.appendChild(card);
@@ -245,6 +270,8 @@ function injectCss(): void {
 .hud-logo .l1{font-weight:900;font-size:max(18px,min(calc(var(--u)*40),7vw));text-shadow:0 calc(var(--u)*4) 0 #1b3a7a}
 .hud-logo .l2{font-weight:900;font-size:max(26px,min(calc(var(--u)*68),11vw));line-height:1;color:#ffd23a;text-shadow:0 calc(var(--u)*6) 0 #b0520a,0 10px 20px rgba(0,0,0,.35)}
 .hud-play{min-width:calc(var(--u)*280);min-height:max(48px,calc(var(--u)*80));padding:0 calc(var(--u)*28);border-radius:calc(var(--u)*22);background:linear-gradient(#5ff07a,#22b043);box-shadow:0 calc(var(--u)*8) 0 #137a2c;border:calc(var(--u)*4) solid #fff;color:#fff;font:900 max(20px,calc(var(--u)*40)) Rubik,Arial,sans-serif;text-shadow:0 3px 0 #137a2c;cursor:pointer}
+.hud-ad{display:block;margin:calc(var(--u)*6) auto calc(var(--u)*14);background:linear-gradient(#ffd23a,#ff9a1f);box-shadow:0 calc(var(--u)*8) 0 #b0520a;text-shadow:0 3px 0 #b0520a;font-size:max(16px,calc(var(--u)*30))}
+.hud-skip{position:absolute;left:50%;top:calc(var(--u)*120 + env(safe-area-inset-top));transform:translateX(-50%);pointer-events:auto;padding:calc(var(--u)*10) calc(var(--u)*22);min-height:44px;border:calc(var(--u)*3) solid #fff;border-radius:calc(var(--u)*16);background:linear-gradient(#ffd23a,#ff9a1f);box-shadow:0 calc(var(--u)*5) 0 #b0520a;color:#fff;font:900 max(15px,calc(var(--u)*22)) Rubik,Arial,sans-serif;text-shadow:0 2px 0 #b0520a;cursor:pointer;white-space:nowrap}
 .hud-play:active{transform:translateY(calc(var(--u)*4));box-shadow:0 calc(var(--u)*4) 0 #137a2c}
 .hud-row{display:flex;align-items:stretch;gap:calc(var(--u)*14);flex-wrap:wrap;justify-content:center}
 .hud-sb{display:inline-flex;align-items:center;justify-content:center;gap:calc(var(--u)*8);line-height:1;min-width:calc(var(--u)*150);height:max(44px,calc(var(--u)*60));padding:calc(var(--u)*12) calc(var(--u)*20);border-radius:calc(var(--u)*18);border:3px solid #fff;color:#fff;font:900 max(14px,calc(var(--u)*20)) Rubik,Arial,sans-serif;box-shadow:0 calc(var(--u)*6) 0 rgba(0,0,0,.3);cursor:pointer}

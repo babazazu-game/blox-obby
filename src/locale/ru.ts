@@ -6,7 +6,7 @@
  * на экране у игрока. Полноту проверяет `core.i18n.findMissing()`.
  */
 export const RU = {
-  title: 'Название игры',
+  title: 'Обби: Блок за блоком',
   loading: 'Загружаем…',
 
   'menu.play': 'ИГРАТЬ',

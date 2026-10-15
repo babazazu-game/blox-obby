@@ -5,6 +5,7 @@ import { GRID } from '../engine/level.ts';
 import { BODY, type Physics, type Solid } from '../engine/physics.ts';
 import type { Controller } from '../engine/controller.ts';
 import { tapSize, safeInsets } from 'yg-core';
+import { L } from '../i18n.ts';
 
 /**
  * Механика «Блок за блоком»: у игрока запас блоков на этап, он ставит их
@@ -215,7 +216,7 @@ export class Bridge {
 
   private refresh(): void {
     // Блоки кончились, а этап не пройден — ребёнок должен знать, что делать: подсказываем сброс.
-    this.counter.innerHTML = this.left > 0 ? `🧱 × ${this.left}` : `🧱 × 0 <small>· не хватает? ⟲ R — заново</small>`;
+    this.counter.innerHTML = this.left > 0 ? `🧱 × ${this.left}` : `🧱 × 0 <small>· ${L('не хватает? ⟲ R — заново', 'not enough? ⟲ R — reset')}</small>`;
     this.counter.classList.toggle('empty', this.left === 0);
     this.onChange?.();
   }

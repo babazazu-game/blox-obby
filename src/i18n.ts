@@ -55,6 +55,10 @@ export const t = (key: string, vars?: Record<string, string | number>): string =
 
 export const lang = (): 'ru' | 'en' => core.i18n.current;
 
+/** Короткая строка «по-русски / по-английски» прямо в коде. Язык известен до
+ *  загрузки игры (main.ts импортирует game.ts только после core.ready). */
+export const L = (ru: string, en: string): string => (lang() === 'en' ? en : ru);
+
 /**
  * Множественное число для счётных строк.
  *

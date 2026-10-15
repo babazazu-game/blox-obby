@@ -1,4 +1,5 @@
 import type { PartDef, StageDef } from '../engine/level.ts';
+import { L } from '../i18n.ts';
 
 /**
  * Трассы «Обби: Блок за блоком» — по одной на мир (WORLDS в worlds.ts), 8 этапов.
@@ -215,25 +216,25 @@ export const COURSES: StageDef[][] = [
 
 /** Подсказки этапов (ключ → текст). Позже уйдут в локализацию. */
 export const HINTS: Record<string, string> = {
-  hint1: 'Пропасть не перепрыгнуть! Подойди к краю и поставь блок — E или 🧱',
-  hint3: 'Стена высокая — поставь блок-ступеньку у стены',
-  hint4: 'Поставь блок на блок — получится башенка',
-  hint5: 'Блоков ровно два — не потрать оба на первую пропасть!',
-  hintBelt: 'Лента сносит в сторону — беги и держись против неё',
-  hintBack: 'Лента тащит назад к пропасти — не стой на месте!',
-  hint11: 'Внизу лава! Не упади',
-  hint12: 'Подожди платформу и запрыгивай',
-  hint13: 'Прыгни на батут!',
-  hint14: 'Белые плиты исчезают — беги быстрее! Перепрыгни крутилку',
-  hintIce: 'Ледяные плиты исчезают — не стой на месте!',
-  hintFinal: 'Последний этап! Соберись!',
-  hintFinal2: 'Финал шоу: тропа, карусель и маятник!',
-  hintSpin: 'Карусель крутит — беги к краю в нужный момент',
-  hintBump: 'Шары-маятники сбивают с моста — проскакивай между ними',
-  hintDoors: 'Часть дверей ненастоящие — врежься с разбега!',
-  hintTip: 'Тайная тропа: часть плит проваливается. Смотри, где прошли другие!',
-  hintWind: 'Ветер сдувает вбок — держись против ветра',
-  hintUp: 'Прыгни в столб ветра — он поднимет наверх',
-  hintSide: 'Лифт ездит поперёк — запрыгивай, когда он рядом',
-  hintUpLift: 'Лифт поднимает — встань на него и жди',
+  hint1: L('Пропасть не перепрыгнуть! Подойди к краю и поставь блок — E или 🧱', "Too far to jump! Walk to the edge and place a block — E or 🧱"),
+  hint3: L('Стена высокая — поставь блок-ступеньку у стены', "The wall is high — place a block as a step"),
+  hint4: L('Поставь блок на блок — получится башенка', "Stack a block on a block to build a tower"),
+  hint5: L('Блоков ровно два — не потрать оба на первую пропасть!', "Only two blocks — don't spend both on the first gap!"),
+  hintBelt: L('Лента сносит в сторону — беги и держись против неё', "The belt pushes you sideways — run against it"),
+  hintBack: L('Лента тащит назад к пропасти — не стой на месте!', "The belt drags you back to the gap — keep moving!"),
+  hint11: L('Внизу лава! Не упади', "Lava below! Don't fall"),
+  hint12: L('Подожди платформу и запрыгивай', "Wait for the platform and hop on"),
+  hint13: L('Прыгни на батут!', "Jump on the trampoline!"),
+  hint14: L('Белые плиты исчезают — беги быстрее! Перепрыгни крутилку', "White tiles vanish — run fast! Jump over the spinner"),
+  hintIce: L('Ледяные плиты исчезают — не стой на месте!', "Ice tiles vanish — keep moving!"),
+  hintFinal: L('Последний этап! Соберись!', "Final stage! Focus!"),
+  hintFinal2: L('Финал шоу: тропа, карусель и маятник!', "Show finale: path, carousel and pendulum!"),
+  hintSpin: L('Карусель крутит — беги к краю в нужный момент', "The carousel spins — run to the edge at the right moment"),
+  hintBump: L('Шары-маятники сбивают с моста — проскакивай между ними', "Pendulum balls knock you off — slip between them"),
+  hintDoors: L('Часть дверей ненастоящие — врежься с разбега!', "Some doors are fake — run right through!"),
+  hintTip: L('Тайная тропа: часть плит проваливается. Смотри, где прошли другие!', "Secret path: some tiles drop. Watch where others walked!"),
+  hintWind: L('Ветер сдувает вбок — держись против ветра', "Wind blows you sideways — lean into it"),
+  hintUp: L('Прыгни в столб ветра — он поднимет наверх', "Jump into the updraft — it lifts you up"),
+  hintSide: L('Лифт ездит поперёк — запрыгивай, когда он рядом', "The lift moves sideways — hop on when it's close"),
+  hintUpLift: L('Лифт поднимает — встань на него и жди', "The lift goes up — stand on it and wait"),
 };

@@ -156,7 +156,7 @@
   <div id="splash">
     <div class="sp-cloud c1"></div><div class="sp-cloud c2"></div><div class="sp-cloud c3"></div>
     <div id="splash-mark"><div class="sp-cube k1"></div><div class="sp-cube k2"></div><div class="sp-cube k3"></div><div class="sp-head"></div></div>
-    <img id="splash-logo" src="./assets/logo.webp" alt="Обби: Блок за блоком">
+    <img id="splash-logo" alt="">
     <div id="splash-bar"><div id="splash-fill"></div></div>
     <div id="splash-text"></div>
   </div>
@@ -170,6 +170,12 @@
       управления. Ставится здесь, а не в игре: до появления движка проходит
       секунда-другая, и попасть в неё пальцем вполне можно.
     */
+    // Логотип загрузки — на языке игрока: SDK ещё нет, берём ?lang= площадки или язык браузера
+    (function () {
+      var q = new URLSearchParams(location.search).get('lang');
+      var ru = q ? /^(ru|be|kk|uk|uz)$/.test(q) : /^(ru|be|kk|uk|uz)/i.test(navigator.language || '');
+      document.getElementById('splash-logo').src = ru ? './assets/logo.webp' : './assets/logo_en.webp';
+    })();
     document.addEventListener('contextmenu', (e) => e.preventDefault());
     document.addEventListener('selectstart', (e) => e.preventDefault());
     document.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });

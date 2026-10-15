@@ -40,6 +40,8 @@ import { Bridge, WOOD } from './game/bridge.ts';
 import { SKINS } from './game/skins.ts';
 import { UPGRADES, PETS, TRAILS } from './game/upgrades.ts';
 import { progress } from './progress.ts';
+import { L } from './i18n.ts';
+import { watchRewarded, interstitialBetweenLevels } from './ads.ts';
 
 export interface Game {
   renderer: THREE.WebGLRenderer;
@@ -50,6 +52,10 @@ export interface Game {
 
 /** Награды: чекпоинт 5, финиш мира 50 + 25 за каждый следующий мир (монета трассы — 1 × бонусы). */
 const COIN_CP = 5, COIN_FINISH = 50, FIRST_CLEAR = 100;
+/** После стольких падений на одном этапе предлагаем пропустить его за ролик. */
+const SKIP_AFTER = 5;
+/** Лидерборд площадки (создать в Консоли с этим техническим именем). */
+const LB_WINS = 'wins';
 /** Упал на столько ниже точки возрождения — возвращаем на неё. */
 const FALL_LIMIT = 20;
 
@@ -100,13 +106,13 @@ export function createScene(parent: HTMLElement): Game {
   const portals = WORLDS.map((w, i) => { const p = ring(i * 60, 20); return new Portal(scene, physics, p, faceCenter(p), w.portal, w.name); });
   const stallAt = (deg: number) => { const p = ring(deg, 11.5); return [p, faceCenter(p)] as const; };
   const stalls = {
-    skins: new Stall(scene, physics, ...stallAt(330), 0xff7a2f, 'Скины', '👕'),
-    upg: new Stall(scene, physics, ...stallAt(30), 0x2a74e8, 'Улучшения', '⚡'),
-    pets: new Stall(scene, physics, ...stallAt(150), 0x9b59d0, 'Питомцы', '🐾'),
-    trails: new Stall(scene, physics, ...stallAt(210), 0xff6fb5, 'Следы', '✨'),
+    skins: new Stall(scene, physics, ...stallAt(330), 0xff7a2f, L('Скины', 'Skins'), '👕'),
+    upg: new Stall(scene, physics, ...stallAt(30), 0x2a74e8, L('Улучшения', 'Upgrades'), '⚡'),
+    pets: new Stall(scene, physics, ...stallAt(150), 0x9b59d0, L('Питомцы', 'Pets'), '🐾'),
+    trails: new Stall(scene, physics, ...stallAt(210), 0xff6fb5, L('Следы', 'Trails'), '✨'),
   };
   const chest = new Chest(scene, physics, ring(90, 7));
-  const board = textSprite(['РЕКОРДЫ'], { w: 512, h: 400 });
+  const board = textSprite([L('РЕКОРДЫ', 'RECORDS')], { w: 512, h: 400 });
   board.scale.set(5, 3.9, 1);
   board.position.copy(ring(270, 19)).setY(3.6);
   scene.add(board);
@@ -160,7 +166,13 @@ export function createScene(parent: HTMLElement): Game {
   let mode: 'menu' | 'hub' | 'run' = 'menu';
   let wi = 0;                      // текущий мир
   let reached = 0;                 // достигнутый чекпоинт в забеге
-  let runTime = 0, falls = 0, runCoins = 0, coinFrac = 0, chutes = 0;
+  let runTime = 0, falls = 0, runCoins = 0, coinFrac = 0, chutes = 0, stageFalls = 0;
+  /** На время рекламы игра стоит (звук глушит каркас). */
+  let adPaused = false;
+  const withAd = async <T,>(show: () => Promise<T>): Promise<T> => {
+    adPaused = true; core.gameplayStop();
+    try { return await show(); } finally { adPaused = false; clock.getDelta(); if (mode !== 'menu') core.gameplayStart(); }
+  };
   const lastSafe = new THREE.Vector3();
   let t = 0;
   const course = () => courses[wi];
@@ -193,8 +205,8 @@ export function createScene(parent: HTMLElement): Game {
   const fmtTime = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
   const refreshHub = () => {
     const un = progress.get('unlocked'), best = progress.get('best');
-    portals.forEach((p, i) => p.setLocked(i >= un, i >= un ? '🔒 ЗАКРЫТО' : best[WORLDS[i].id] ? `⏱ ${fmtTime(best[WORLDS[i].id])}` : 'ВХОД'));
-    setSpriteText(board, ['РЕКОРДЫ', ...WORLDS.map((w) => `${w.name}  ${best[w.id] ? fmtTime(best[w.id]) : '—'}`)]);
+    portals.forEach((p, i) => p.setLocked(i >= un, i >= un ? L('🔒 ЗАКРЫТО', '🔒 LOCKED') : best[WORLDS[i].id] ? `⏱ ${fmtTime(best[WORLDS[i].id])}` : L('ВХОД', 'ENTER')));
+    setSpriteText(board, [L('РЕКОРДЫ', 'RECORDS'), ...WORLDS.map((w) => `${w.name}  ${best[w.id] ? fmtTime(best[w.id]) : '—'}`)]);
   };
 
   /* ───────────────────────────── ЛАВКИ ───────────────────────────── */
@@ -205,12 +217,12 @@ export function createScene(parent: HTMLElement): Game {
     sfx.play('coin', 0);
     return true;
   };
-  const closeShop = () => { hud.showHud(true); bridge.setVisible(mode === 'run'); };
-  const T = { buy: 'Купить', wear: 'Надеть', worn: 'Надето', close: 'Закрыть', max: 'МАКС' };
+  const closeShop = () => { core.gameplayStart(); hud.showHud(true); bridge.setVisible(mode === 'run'); };
+  const T = { buy: L('Купить', 'Buy'), wear: L('Надеть', 'Wear'), worn: L('Надето', 'Worn'), close: L('Закрыть', 'Close'), max: L('МАКС', 'MAX') };
   const shops = {
     skins: new Shop(parent, SKINS, () => ({ coins: progress.get('coins'), owned: progress.get('owned'), selected: progress.get('skin') }),
       (id) => { const it = SKINS.find((k) => k.id === id)!; if (!buy(it.price)) return false; progress.set('owned', [...progress.get('owned'), id]); return true; },
-      (id) => { wearSkin(id); sfx.play('click', 0); }, closeShop, { title: 'СКИНЫ', ...T }),
+      (id) => { wearSkin(id); sfx.play('click', 0); }, closeShop, { title: L('СКИНЫ', 'SKINS'), ...T }),
     upg: new Shop(parent, UPGRADES.map((u) => ({ id: u.id, name: u.name, icon: u.icon, prices: u.prices, desc: u.desc })),
       () => ({ coins: progress.get('coins'), levels: progress.get('upgrades') }),
       (id) => {
@@ -219,17 +231,17 @@ export function createScene(parent: HTMLElement): Game {
         progress.set('upgrades', { ...progress.get('upgrades'), [id]: l + 1 });
         fx.emit('confetti', tmp.copy(ctl.pos).setY(ctl.pos.y + 2), 0.6);
         return true;
-      }, () => undefined, closeShop, { title: 'УЛУЧШЕНИЯ', ...T }),
+      }, () => undefined, closeShop, { title: L('УЛУЧШЕНИЯ', 'UPGRADES'), ...T }),
     pets: new Shop(parent, PETS.map((p) => ({ id: p.id, name: p.name, price: p.price, ...(p.id === 'none' ? { icon: '🚫' } : { make: () => makePet(p.look) }) })),
       () => ({ coins: progress.get('coins'), owned: progress.get('pets'), selected: progress.get('pet') }),
       (id) => { const it = PETS.find((p) => p.id === id)!; if (!buy(it.price)) return false; progress.set('pets', [...progress.get('pets'), id]); return true; },
-      (id) => { setPet(id); sfx.play('click', 0); }, closeShop, { title: 'ПИТОМЦЫ', ...T }),
+      (id) => { setPet(id); sfx.play('click', 0); }, closeShop, { title: L('ПИТОМЦЫ', 'PETS'), ...T }),
     trails: new Shop(parent, TRAILS.map((tr) => ({ id: tr.id, name: tr.name, price: tr.price, ...(tr.colors.length ? { colors: tr.colors } : { icon: '🚫' }) })),
       () => ({ coins: progress.get('coins'), owned: progress.get('trails'), selected: progress.get('trail') }),
       (id) => { const it = TRAILS.find((x) => x.id === id)!; if (!buy(it.price)) return false; progress.set('trails', [...progress.get('trails'), id]); return true; },
-      (id) => { progress.set('trail', id); sfx.play('click', 0); }, closeShop, { title: 'СЛЕДЫ', ...T }),
+      (id) => { progress.set('trail', id); sfx.play('click', 0); }, closeShop, { title: L('СЛЕДЫ', 'TRAILS'), ...T }),
   };
-  const openShop = (s: Shop) => { sfx.play('click', 0); hud.showHud(false); bridge.setVisible(false); s.open(); };
+  const openShop = (s: Shop) => { core.gameplayStop(); sfx.play('click', 0); hud.showHud(false); bridge.setVisible(false); s.open(); };
   const shopOpen = () => !!parent.querySelector('.shop.on');
 
   /* ───────────────────────────── ПЕРЕХОДЫ ───────────────────────── */
@@ -241,6 +253,18 @@ export function createScene(parent: HTMLElement): Game {
     hud.hint(h ? HINTS[h] ?? null : null);
     hud.setStage(`${WORLDS[wi].name} · ${i + 1} / ${course().stages.length - 1}`, i / (course().stages.length - 1));
     cam.turnTo(st.yaw + Math.PI);
+    stageFalls = 0;
+    hud.showSkip(null);
+  };
+
+  /** Пропуск этапа за ролик: ставим игрока на следующий чекпоинт — дальше обычная логика. */
+  const skipStage = async () => {
+    if (mode !== 'run') return;
+    if (!(await withAd(watchRewarded))) return;
+    const next = course().stages[reached + 1];
+    if (!next) return;
+    hud.showSkip(null);
+    ctl.pos.copy(next.spawn).setY(next.spawn.y + 0.3); ctl.vel.set(0, 0, 0);
   };
 
   const enterHub = () => {
@@ -253,9 +277,11 @@ export function createScene(parent: HTMLElement): Game {
     ctl.respawn();
     bots.toHub(HUB, 16);
     for (const p of portals) p.trigger.reset();
-    hud.setStage('ХАБ', 0);
-    hud.hint('Выбери портал — или загляни в лавки 🛒');
+    hud.setStage(L('ХАБ', 'HUB'), 0);
+    hud.hint(L('Выбери портал — или загляни в лавки 🛒', 'Pick a portal — or visit the shops 🛒'));
     hud.showHomeButton(false);
+    hud.showSkip(null);
+    core.gameplayStart();
     cam.turnTo(0);
     pet?.group.position.copy(ctl.pos);
     refreshHub();
@@ -280,7 +306,7 @@ export function createScene(parent: HTMLElement): Game {
     bridge.setVisible(true);
     enterStage(0);
     hud.showHomeButton(true);
-    hud.toast(`МИР: ${WORLDS[w].name}`, 1600);
+    hud.toast(`${L('МИР', 'WORLD')}: ${WORLDS[w].name}`, 1600);
     sfx.play('checkpoint', 0, 0.5);   // вход в мир — вдвое тише (просьба пользователя)
     cam.yaw = c.stages[0].yaw + Math.PI;
     pet?.group.position.copy(ctl.pos);
@@ -290,34 +316,44 @@ export function createScene(parent: HTMLElement): Game {
     mode = 'hub';   // пока висит карточка — забег закончен
     bridge.startStage(course().stages[reached].origin, 0);
     hud.hint(null);
-    hud.toast('ФИНИШ!', 1600);
+    hud.toast(L('ФИНИШ!', 'FINISH!'), 1600);
     sfx.play('finish', 0);
     fx.emit('confetti', tmp.copy(ctl.pos).setY(ctl.pos.y + 1.5), 2.5);
     addCoins(COIN_FINISH + 25 * wi);
     const id = WORLDS[wi].id, best = { ...progress.get('best') };
     // первое прохождение мира — бонус: первые миры проходятся один раз,
     // и без бонуса после них не на что купить даже дешёвый скин
-    if (!best[id]) { addCoins(FIRST_CLEAR); hud.toast(`ПЕРВОЕ ПРОХОЖДЕНИЕ +${FIRST_CLEAR}`, 1800); }
+    if (!best[id]) { addCoins(FIRST_CLEAR); hud.toast(`${L('ПЕРВОЕ ПРОХОЖДЕНИЕ', 'FIRST CLEAR')} +${FIRST_CLEAR}`, 1800); }
     const record = !best[id] || runTime < best[id];
     if (record) best[id] = runTime;
     const was = progress.get('unlocked');
+    hud.showSkip(null);
+    core.gameplayStop();
+    core.leaderboards.submit(LB_WINS, progress.get('runs') + 1);
     progress.patch({ best, runs: progress.get('runs') + 1, unlocked: Math.max(was, Math.min(WORLDS.length, wi + 2)) });
     const opened = progress.get('unlocked') > was;
     const stars = falls <= 3 ? 3 : falls <= 10 ? 2 : 1;
     setTimeout(() => hud.showFinish({
-      title: record ? 'НОВЫЙ РЕКОРД!' : 'ТЫ ПРОШЁЛ!', stars,
-      line: `⏱ ${fmtTime(runTime)}   💀 ${falls}   ${coinHtml()} +${runCoins}${opened ? `<br>🔓 Открыт мир ${WORLDS[wi + 1].name}!` : ''}`,
-      next: 'В ХАБ',
-    }, () => enterHub()), 1400);
+      title: record ? L('НОВЫЙ РЕКОРД!', 'NEW RECORD!') : L('ТЫ ПРОШЁЛ!', 'YOU MADE IT!'), stars,
+      line: `⏱ ${fmtTime(runTime)}   💀 ${falls}   ${coinHtml()} +${runCoins}${opened ? `<br>🔓 ${L('Открыт мир', 'Unlocked')} ${WORLDS[wi + 1].name}!` : ''}`,
+      next: L('В ХАБ', 'TO HUB'),
+      bonus: { label: L(`📺 ×2 монеты (+${runCoins})`, `📺 ×2 coins (+${runCoins})`), onClick: async () => {
+        const got = runCoins;
+        if (!(await withAd(watchRewarded))) return false;
+        addCoins(got); sfx.play('coin', 0);
+        return true;
+      } },
+    }, () => void withAd(interstitialBetweenLevels).then(enterHub)), 1400);
   };
 
-  hud.onHome = () => { if (mode === 'run') { sfx.play('click', 0); enterHub(); } };
+  hud.onHome = () => { if (mode === 'run') { sfx.play('click', 0); mode = 'hub'; void withAd(interstitialBetweenLevels).then(enterHub); } };
 
   const openMenu = () => {
     mode = 'menu';
+    core.gameplayStop();
     hud.showHud(false);
     bridge.setVisible(false);
-    hud.showMenu({ title1: 'ОББИ:', title2: 'БЛОК ЗА БЛОКОМ', play: 'ИГРАТЬ', sub: `${coinHtml()} ${progress.get('coins')}` }, () => {
+    hud.showMenu({ title1: L('ОББИ:', 'OBBY:'), title2: L('БЛОК ЗА БЛОКОМ', 'BLOCK BY BLOCK'), play: L('ИГРАТЬ', 'PLAY'), sub: `${coinHtml()} ${progress.get('coins')}` }, () => {
       sfx.play('click', 0);
       void sfx.startMusic();   // музыка — с нажатием «ИГРАТЬ»: раньше браузер звук не разрешает
       hud.showHud(true);
@@ -369,6 +405,7 @@ export function createScene(parent: HTMLElement): Game {
         if (ev === 'kill') { fx.emit('lava', tmp.copy(ctl.pos).setY(ctl.pos.y + 0.8)); cam.shake(0.35); }
         sfx.play(ev === 'kill' ? 'lava' : 'respawn', 0);
         falls++;
+        if (++stageFalls >= SKIP_AFTER) hud.showSkip(L('⏭ Пропустить этап 📺', '⏭ Skip stage 📺'), () => void skipStage());
         if (chutes > 0) {
           // парашют: обратно туда, где стоял, а не на чекпоинт
           chutes--;
@@ -386,7 +423,7 @@ export function createScene(parent: HTMLElement): Game {
         ctl.setSpawn(c.stages[reached].spawn, c.stages[reached].yaw);
         if (reached < c.stages.length - 1) {
           enterStage(reached);
-          hud.toast('ЧЕКПОИНТ!'); sfx.play('checkpoint', 0); addCoins(COIN_CP);
+          hud.toast(L('ЧЕКПОИНТ!', 'CHECKPOINT!')); sfx.play('checkpoint', 0); addCoins(COIN_CP);
           fx.emit('confetti', tmp.copy(ctl.pos).setY(ctl.pos.y + 1.5));
         } else finish();
       }
@@ -401,7 +438,7 @@ export function createScene(parent: HTMLElement): Game {
       portals.forEach((p, i) => {
         if (!p.trigger.enter(ctl.pos)) return;
         if (i < progress.get('unlocked')) startRun(i);
-        else { sfx.play('denied', 0); hud.toast(`🔒 Сначала пройди ${WORLDS[i - 1].name}`, 1500); }
+        else { sfx.play('denied', 0); hud.toast(`🔒 ${L('Сначала пройди', 'First beat')} ${WORLDS[i - 1].name}`, 1500); }
       });
       if (stalls.skins.trigger.enter(ctl.pos)) openShop(shops.skins);
       if (stalls.upg.trigger.enter(ctl.pos)) openShop(shops.upg);
@@ -417,7 +454,7 @@ export function createScene(parent: HTMLElement): Game {
           sfx.play('checkpoint', 0);
           fx.emit('coin', tmp.copy(chest.group.position).setY(1.8), 3);
           hud.toast(`🎁 +${n}`, 1500);
-        } else { sfx.play('denied', 0); hud.toast('🎁 Приходи завтра!', 1300); }
+        } else { sfx.play('denied', 0); hud.toast(L('🎁 Приходи завтра!', '🎁 Come back tomorrow!'), 1300); }
       }
     }
     chest.update(dt, progress.get('chest') !== new Date().toISOString().slice(0, 10), t);
@@ -517,7 +554,7 @@ export function createScene(parent: HTMLElement): Game {
         // Потолок шага: после подвисания вкладки не «телепортируемся» сквозь пол.
         const real = clock.getDelta();
         const dt = Math.min(real, 1 / 20);
-        if (paused) return;
+        if (paused || adPaused) return;
         tick(dt);
         renderer.render(scene, cam.camera);
         fps.frame(real);

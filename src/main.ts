@@ -21,7 +21,7 @@ import { pixelRatio, splashCaption, splashHide, splashProgress } from 'yg-core';
 import { core } from './core.ts';
 import { t } from './i18n.ts';
 import { showStickyBanner } from './ads.ts';
-import { createScene, type Game } from './game.ts';
+import type { Game } from './game.ts';
 
 /**
  * Ждать чего-либо дольше этого нельзя: игрок смотрит на полосу загрузки.
@@ -51,6 +51,8 @@ async function boot(): Promise<void> {
   splashProgress(HEAD_START);
 
   const parent = document.getElementById('game')!;
+  // игра грузится ПОСЛЕ того, как язык известен: её строки считаются при импорте
+  const { createScene } = await import('./game.ts');
   const game = createScene(parent);
 
   watchSize(game, parent);
