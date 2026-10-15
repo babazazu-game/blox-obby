@@ -1,0 +1,3 @@
+saved D:\work\CLAUDE\GAME\Blox Obby\art\store\cover_bg_portrait.png (2007331 bytes)
+(node:24364) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
