@@ -7,3 +7,5 @@ build/
 .claude/settings.local.json
 art/music_src/
 art/store/shots/
+art/store/film/
+art/store/video/

@@ -13,8 +13,11 @@ const shotSaver = {
       let body = '';
       req.on('data', (c: Buffer) => (body += c));
       req.on('end', () => {
-        const name = path.basename(new URL(req.url, 'http://x').searchParams.get('name') || 'shot.png');
-        const dir = path.resolve('art/store/shots');
+        const q = new URL(req.url, 'http://x').searchParams;
+        const name = path.basename(q.get('name') || 'shot.png');
+        // dir — подпапка (кадры роликов: art/store/film/<dir>)
+        const sub = (q.get('dir') || '').replace(/[^\w-]/g, '');
+        const dir = path.resolve(sub ? `art/store/film/${sub}` : 'art/store/shots');
         fs.mkdirSync(dir, { recursive: true });
         fs.writeFileSync(path.join(dir, name), Buffer.from(body.split(',')[1], 'base64'));
         res.end('ok');

@@ -185,6 +185,8 @@ export function createScene(parent: HTMLElement): Game {
   let runTime = 0, falls = 0, runCoins = 0, coinFrac = 0, chutes = 0, stageFalls = 0;
   /** На время рекламы игра стоит (звук глушит каркас). */
   let adPaused = false;
+  /** DEV: камера следит не за игроком, а за этой точкой (съёмка роликов — за ботом). */
+  let camTarget: THREE.Vector3 | null = null;
   const withAd = async <T,>(show: () => Promise<T>): Promise<T> => {
     adPaused = true; core.gameplayStop();
     try { return await show(); } finally { adPaused = false; clock.getDelta(); if (mode !== 'menu') core.gameplayStart(); }
@@ -488,7 +490,7 @@ export function createScene(parent: HTMLElement): Game {
     const tc = trailColors();
     trailT -= dt;
     if (tc.length && moving && trailT <= 0) { fx.emit('trail', tmp.copy(ctl.pos).setY(ctl.pos.y + 0.4), 1, tc); trailT = 0.06; }
-    cam.update(dt, ctl.pos);
+    cam.update(dt, camTarget ?? ctl.pos);
     followShadow(ctl.pos);
   };
 
@@ -512,7 +514,7 @@ export function createScene(parent: HTMLElement): Game {
     });
     Object.assign(window, {
       __renderer: renderer, __scene: scene, __ctl: ctl, __cam: cam, __bridge: bridge, __phys: physics, __tick: tick,
-      __bots: bots, __fx: fx, __goto: gotoStage, __stage: () => reached, __origin: () => course().stages[reached].origin,
+      __bots: bots, __fx: fx, __camFollow: (v: THREE.Vector3 | null) => { camTarget = v; player.root.visible = !v; if (pet) pet.group.visible = !v; }, __goto: gotoStage, __stage: () => reached, __origin: () => course().stages[reached].origin,
       __startRun: startRun, __enterHub: enterHub, __mode: () => mode, __courses: courses, __shops: shops, __openShop: openShop,
     });
   }
