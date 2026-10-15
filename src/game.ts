@@ -82,10 +82,13 @@ export function createScene(parent: HTMLElement): Game {
   scene.add(plaza);
   physics.addMesh(plaza);
   // дорожки от центра к каждому порталу — видно, куда идти
+  // порталы по кругу через равный угол; лавки, сундук и доска — посередине между ними
+  const STEP = 360 / WORLDS.length;
+  const HALF = (k: number) => (k + 0.5) * STEP;
   for (let i = 0; i < WORLDS.length; i++) {
     const path = block({ x: 3.5, y: 0.1, z: 19 }, 0xe8d8b0);
-    const mid = ring(i * 60, 10);
-    path.position.set(mid.x, 0.05, mid.z); path.rotation.y = -i * Math.PI / 3; path.receiveShadow = true;
+    const mid = ring(i * STEP, 10);
+    path.position.set(mid.x, 0.05, mid.z); path.rotation.y = -i * STEP * Math.PI / 180; path.receiveShadow = true;
     scene.add(path);
   }
   {
@@ -94,7 +97,7 @@ export function createScene(parent: HTMLElement): Game {
     // ёлки по краю площади, с проходами к порталам
     for (let i = 0; i < 40; i++) {
       const deg = (i / 40) * 360;
-      if (WORLDS.some((_, k) => Math.abs(((deg - k * 60 + 540) % 360) - 180) < 12)) continue;
+      if (WORLDS.some((_, k) => Math.abs(((deg - k * STEP + 540) % 360) - 180) < 12)) continue;
       const p = ring(deg, 24.5);
       d.tree(p.x, 0, p.z, d.range(0.8, 1.2));
     }
@@ -103,22 +106,22 @@ export function createScene(parent: HTMLElement): Game {
     d.flush(scene, physics);
   }
   // порталы по кругу: каждый мир — в свою сторону
-  const portals = WORLDS.map((w, i) => { const p = ring(i * 60, 20); return new Portal(scene, physics, p, faceCenter(p), w.portal, w.name); });
+  const portals = WORLDS.map((w, i) => { const p = ring(i * STEP, 20); return new Portal(scene, physics, p, faceCenter(p), w.portal, w.name); });
   const stallAt = (deg: number) => { const p = ring(deg, 11.5); return [p, faceCenter(p)] as const; };
   const stalls = {
-    skins: new Stall(scene, physics, ...stallAt(330), 0xff7a2f, L('Скины', 'Skins'), '👕'),
-    upg: new Stall(scene, physics, ...stallAt(30), 0x2a74e8, L('Улучшения', 'Upgrades'), '⚡'),
-    pets: new Stall(scene, physics, ...stallAt(150), 0x9b59d0, L('Питомцы', 'Pets'), '🐾'),
-    trails: new Stall(scene, physics, ...stallAt(210), 0xff6fb5, L('Следы', 'Trails'), '✨'),
+    skins: new Stall(scene, physics, ...stallAt(HALF(6)), 0xff7a2f, L('Скины', 'Skins'), '👕'),
+    upg: new Stall(scene, physics, ...stallAt(HALF(0)), 0x2a74e8, L('Улучшения', 'Upgrades'), '⚡'),
+    pets: new Stall(scene, physics, ...stallAt(HALF(2)), 0x9b59d0, L('Питомцы', 'Pets'), '🐾'),
+    trails: new Stall(scene, physics, ...stallAt(HALF(3)), 0xff6fb5, L('Следы', 'Trails'), '✨'),
   };
-  const chest = new Chest(scene, physics, ring(90, 7));
+  const chest = new Chest(scene, physics, ring(HALF(1), 7));
   const board = textSprite([L('РЕКОРДЫ', 'RECORDS')], { w: 512, h: 400 });
   board.scale.set(5, 3.9, 1);
-  board.position.copy(ring(270, 19)).setY(3.6);
+  board.position.copy(ring(HALF(4), 19)).setY(3.6);
   scene.add(board);
   {
     const post = block({ x: 0.3, y: 1.6, z: 0.3 }, 0x444a52);
-    post.position.copy(ring(270, 19)).setY(0.8); post.userData.static = true; scene.add(post);
+    post.position.copy(ring(HALF(4), 19)).setY(0.8); post.userData.static = true; scene.add(post);
   }
 
   {
@@ -130,11 +133,24 @@ export function createScene(parent: HTMLElement): Game {
   }
 
   /* ───────────────────────────── МИРЫ ───────────────────────────── */
+  /** Колонна в центре спирали башни: полосы цветов мира, сверху — флаг-корона. */
+  function towerColumn(scene: THREE.Scene, physics: Physics, pts: THREE.Vector3[], colors: number[]): void {
+    const cx = pts.reduce((a, p) => a + p.x, 0) / pts.length, cz = pts.reduce((a, p) => a + p.z, 0) / pts.length;
+    const top = Math.max(...pts.map((p) => p.y)) + 12, bottom = -30;
+    const meshes: THREE.Mesh[] = [];
+    for (let y = bottom, k = 0; y < top; y += 4, k++) {
+      const m = block({ x: 9, y: 4, z: 9 }, colors[k % colors.length]);
+      m.position.set(cx, y + 2, cz); scene.add(m); physics.addMesh(m, 'decor'); meshes.push(m);
+    }
+    const crown = block({ x: 11, y: 1, z: 11 }, 0xffd23a); crown.position.set(cx, top + 0.5, cz); scene.add(crown); meshes.push(crown);
+    mergeStatic(scene, meshes);
+  }
   const courses = COURSES.map((defs, i) => {
     const origin = new THREE.Vector3(1000 * (i + 1), 0, 0);
     const stages = buildLevel(defs, scene, physics, hazards, { origin, colors: WORLDS[i].track });
     decorateCourse(scene, stages, WORLDS[i].palette, WORLDS[i].track, 100 + i, physics);
     cloudsAlong(scene, stages.map((s) => s.origin));
+    if (WORLDS[i].id === 'tower') towerColumn(scene, physics, stages.map((s) => s.origin), WORLDS[i].track);
     return { stages, coins: new Coins(scene, stages) };
   });
   cloudsAlong(scene, [HUB, new THREE.Vector3(30, 0, 0), new THREE.Vector3(-30, 0, 0), new THREE.Vector3(0, 0, 30), new THREE.Vector3(0, 0, -30)]);
@@ -176,6 +192,8 @@ export function createScene(parent: HTMLElement): Game {
   const lastSafe = new THREE.Vector3();
   let t = 0;
   const course = () => courses[wi];
+  /** В башне под трассой — предыдущий виток: упал ниже чекпоинта на 7 м — начинай с него. */
+  const fallLimit = () => (WORLDS[wi].id === 'tower' ? 7 : FALL_LIMIT);
   const lvl = (id: string) => progress.get('upgrades')[id] ?? 0;
 
   const addCoins = (n: number) => {
@@ -302,6 +320,7 @@ export function createScene(parent: HTMLElement): Game {
     ctl.setSpawn(c.stages[0].spawn, c.stages[0].yaw);
     ctl.respawn();
     lastSafe.copy(ctl.pos);
+    bots.fallLimit = fallLimit();
     bots.toCourse(c.stages);
     bridge.setVisible(true);
     enterStage(0);
@@ -400,7 +419,7 @@ export function createScene(parent: HTMLElement): Game {
       const g = ctl.ground;
       // «Безопасное» место для парашюта: стоим на обычной опоре (не на лаве/исчезайке/ленте)
       if (ctl.grounded && g && (!g.kind || g.kind === 'checkpoint' || g.kind === 'placed')) lastSafe.copy(ctl.pos);
-      const fell = ctl.pos.y < ctl.spawn.y - FALL_LIMIT;
+      const fell = ctl.pos.y < ctl.spawn.y - fallLimit();
       if (ev === 'kill' || fell) {
         if (ev === 'kill') { fx.emit('lava', tmp.copy(ctl.pos).setY(ctl.pos.y + 0.8)); cam.shake(0.35); }
         sfx.play(ev === 'kill' ? 'lava' : 'respawn', 0);

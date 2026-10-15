@@ -75,6 +75,9 @@ function nameTag(nick: string): THREE.Sprite {
   return s;
 }
 
+/** Насколько ниже чекпоинта считается «упал» (в башне — меньше: внизу предыдущий виток). */
+let fallLimit = 20;
+
 class Bot {
   readonly avatar: Avatar;
   readonly ctl: Controller;
@@ -228,7 +231,7 @@ class Bot {
     // Опасности действуют и на ботов: батут, лава, лента, бампер, двери, ветер.
     if (this.hazards?.affect(this.ctl, dt) === 'kill') { this.falls++; this.ctl.respawn(); }
     this.ctl.update(dt, move, this.jump, fwd);
-    if (this.ctl.pos.y < this.ctl.spawn.y - 20) { this.falls++; this.ctl.respawn(); this.k = 0; this.builtFor = -1; this.buildQueue = []; }
+    if (this.ctl.pos.y < this.ctl.spawn.y - fallLimit) { this.falls++; this.ctl.respawn(); this.k = 0; this.builtFor = -1; this.buildQueue = []; }
   }
 
   /** Хаб: бродит между случайными точками площади, иногда стоит, иногда подпрыгивает. */
@@ -391,6 +394,7 @@ function gapXZ(a: THREE.Box3, b: THREE.Box3): number {
 }
 
 export class Bots {
+  set fallLimit(v: number) { fallLimit = v; }
   readonly list: Bot[] = [];
 
   constructor(scene: THREE.Scene, physics: Physics, count = 6, hazards?: Hazards) {

@@ -50,4 +50,10 @@ export const WORLDS: WorldDef[] = [
     track: [0xffb800, 0x5a6270, 0x3a8fd0, 0xff7a2f, 0x8a929e],
     palette: { grass: 0x6a727e, rock: 0x4a525e, rockDark: 0x3a414c, trunk: 0x2a2f36, leaf: 0xffb800, leafLight: 0x3a8fd0, flower: 0xff7a2f, tree: 'dead' },
   },
+  {
+    // финальный мир: спираль вокруг башни вверх, над облаками (закат)
+    name: L('БАШНЯ', 'TOWER'), id: 'tower', portal: 0xb98cff, sky: 0xff8a5a, fog: 0xffd9b8,
+    track: [0xb98cff, 0xffd23a, 0x3ad1ff, 0xff6fb5, 0x6dff8a],
+    palette: { grass: 0x9a7cff, rock: 0x6a5a8e, rockDark: 0x544670, trunk: 0x3a2f4e, leaf: 0xffd23a, leafLight: 0xff8a5a, flower: 0xffffff, tree: 'pine' },
+  },
 ];

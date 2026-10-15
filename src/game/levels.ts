@@ -208,10 +208,36 @@ const FACTORY2: StageDef[] = [
   { blocks: 2, check: false, hint: 'hintFinal', parts: [belt(-3, 6, [0, 0, -2.5]), ...doors(-10.5, [1, 3]), P(0, 0, -9, 10, 4), afterGap(16, 0, 4), sideLift(-25), P(0, 0, -31)] },
 ];
 
+
+/* ── Мир 7: БАШНЯ — финал: трасса кружит вокруг башни и всё время поднимается ──
+ * Все повороты налево, каждый этап одной длины (дальний край последней плиты на −19):
+ * трасса ложится квадратной спиралью 22×22 м вокруг центральной колонны (её ставит game.ts).
+ * Виток (4 этапа) поднимается на 12+ м — следующий виток идёт прямо над предыдущим.
+ */
+const TOWER: StageDef[] = [
+  { blocks: 0, check: false, hint: 'hintTower', parts: [P(0, 1, -3, 6, 2), P(0, 2, -7, 6, 2), P(0, 3, -11, 6, 2), P(0, 4, -15, 6, 4)], turn: -1 },
+  { blocks: 0, check: false, hint: 'hint13', parts: [bounce(-3), P(0, 5, -7, 6, 4), P(0, 5, -15, 6, 4)], turn: -1 },
+  { blocks: 0, check: false, hint: 'hintUpLift', parts: [upLift(-3, 0), P(0, 4, -7, 6, 4), P(0, 4, -15, 6, 4)], turn: -1 },
+  { blocks: 1, hint: 'hint3', parts: [P(0, 0, -3, 6, 12), P(0, 3, -15, 6, 4, 4)], turn: -1 },
+  { blocks: 0, check: false, hint: 'hintBelt', parts: [belt(-3, 12, [2.4, 0, 0]), P(0, 1, -15, 6, 4)], turn: -1 },
+  { blocks: 0, check: false, parts: [upLift(-3, 0), P(0, 4, -7, 6, 4), upLift(-11, 4), P(0, 8, -15, 6, 4)], turn: -1 },
+  { blocks: 0, check: false, hint: 'hintSpin', parts: [turntable(-3, 8, 0.9), P(0, 1, -13, 6, 6)], turn: -1 },
+  { blocks: 0, check: false, hint: 'hintBump', parts: [P(0, 0, -3, 4, 12), bumper(-9, 3, 2.6), P(0, 2, -15, 6, 4, 3)], turn: -1 },
+  { blocks: 0, check: false, hint: 'hintSide', parts: [sideLift(-5, 6, 5), P(0, 2, -11, 6, 8)], turn: -1 },
+  { blocks: 2, hint: 'hint4', parts: [P(0, 0, -3, 6, 12), P(0, 4, -15, 6, 4, 5)], turn: -1 },
+  { blocks: 1, check: false, hint: 'hintBack', parts: [belt(-3, 12, [0, 0, 2.2]), P(0, 3, -15, 6, 4, 4)], turn: -1 },
+  { blocks: 0, check: false, hint: 'hintDoors', parts: [P(0, 0, -3, 10, 12), ...doors(-9.5, [0, 3]), P(0, 2, -15, 6, 4, 3)], turn: -1 },
+  { blocks: 0, check: false, hint: 'hintTip', parts: [...tiptoe(-3, [1, 0, 2, 1]), P(0, 2, -13, 6, 6)], turn: -1 },
+  { blocks: 0, check: false, parts: [upLift(-3, 0, 6, 5), P(0, 6, -7, 6, 4), P(0, 8, -13, 6, 6)], turn: -1 },
+  { blocks: 0, check: false, parts: [P(0, 0, -3, 6, 16), spinner(-8, 9, 1.8), spinner(-14, 9, -2.2)], turn: -1 },
+  { blocks: 0, check: false, hint: 'hintFinal', parts: [bounce(-3), P(0, 5, -7, 6, 4), P(0, 7, -15, 6, 4)] },
+];
+
 /** Трасса мира = первая половина + вторая (по 16 этапов). */
 export const COURSES: StageDef[][] = [
   [...MEADOW, ...MEADOW2], [...CANDY, ...CANDY2], [...LAVA, ...LAVA2],
   [...SNOW, ...SNOW2], [...SHOW, ...SHOW2], [...FACTORY, ...FACTORY2],
+  TOWER,
 ];
 
 /** Подсказки этапов (ключ → текст). Позже уйдут в локализацию. */
@@ -236,5 +262,6 @@ export const HINTS: Record<string, string> = {
   hintWind: L('Ветер сдувает вбок — держись против ветра', "Wind blows you sideways — lean into it"),
   hintUp: L('Прыгни в столб ветра — он поднимет наверх', "Jump into the updraft — it lifts you up"),
   hintSide: L('Лифт ездит поперёк — запрыгивай, когда он рядом', "The lift moves sideways — hop on when it's close"),
+  hintTower: L('Башня! Беги по кругу и поднимайся — упал ниже чекпоинта, начнёшь с него', "The Tower! Climb round and round — fall below the checkpoint and you restart from it"),
   hintUpLift: L('Лифт поднимает — встань на него и жди', "The lift goes up — stand on it and wait"),
 };
