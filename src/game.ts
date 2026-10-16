@@ -54,8 +54,21 @@ export interface Game {
 const COIN_CP = 5, COIN_FINISH = 50, FIRST_CLEAR = 100;
 /** После стольких падений на одном этапе предлагаем пропустить его за ролик. */
 const SKIP_AFTER = 5;
-/** Лидерборд площадки (создать в Консоли с этим техническим именем). */
-const LB_WINS = 'wins';
+/**
+ * Лидерборд площадки «overallprogress» (создать в Консоли/на площадке с этим именем,
+ * сортировка — больше лучше). Одно число кодирует два критерия:
+ *   миров пройдено × 10 000 000 − сумма лучших времён этих миров (десятые доли секунды).
+ * Больше разных миров — всегда выше; при равном числе — меньше суммарное время.
+ * Повторное прохождение счёт не растит, только улучшает время рекордом.
+ */
+const LB_NAME = 'overallprogress';
+const LB_WORLD = 10_000_000;
+function lbScore(best: Record<string, number>): { score: number; worlds: number; total: number } {
+  const times = Object.values(best).filter((t) => t > 0);
+  const total = times.reduce((a, t) => a + t, 0);
+  const tenths = Math.min(LB_WORLD - 1, Math.round(total * 10));
+  return { score: times.length ? times.length * LB_WORLD - tenths : 0, worlds: times.length, total };
+}
 /** Упал на столько ниже точки возрождения — возвращаем на неё. */
 const FALL_LIMIT = 20;
 
@@ -223,11 +236,19 @@ export function createScene(parent: HTMLElement): Game {
     else { sfx.setMusicVolume(v); progress.set('musicVol', v); }
   };
 
+  /** Результат в лидерборд: после финиша и при старте (вход в аккаунт — подтянуть старые рекорды). */
+  const submitScore = () => {
+    const sc = lbScore(progress.get('best'));
+    if (sc.score > 0) core.leaderboards.submit(LB_NAME, sc.score, `${sc.worlds}|${Math.round(sc.total)}`);
+  };
+  void core.ready.then(() => setTimeout(submitScore, 3000));
   const fmtTime = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
   const refreshHub = () => {
     const un = progress.get('unlocked'), best = progress.get('best');
     portals.forEach((p, i) => p.setLocked(i >= un, i >= un ? L('🔒 ЗАКРЫТО', '🔒 LOCKED') : best[WORLDS[i].id] ? `⏱ ${fmtTime(best[WORLDS[i].id])}` : L('ВХОД', 'ENTER')));
-    setSpriteText(board, [L('РЕКОРДЫ', 'RECORDS'), ...WORLDS.map((w) => `${w.name}  ${best[w.id] ? fmtTime(best[w.id]) : '—'}`)]);
+    const sc = lbScore(best);
+    setSpriteText(board, [L('РЕКОРДЫ', 'RECORDS'), ...WORLDS.map((w) => `${w.name}  ${best[w.id] ? fmtTime(best[w.id]) : '—'}`),
+      `${L('ИТОГ', 'TOTAL')}: ${sc.worlds} · ${fmtTime(sc.total)}`]);
   };
 
   /* ───────────────────────────── ЛАВКИ ───────────────────────────── */
@@ -351,8 +372,8 @@ export function createScene(parent: HTMLElement): Game {
     const was = progress.get('unlocked');
     hud.showSkip(null);
     core.gameplayStop();
-    core.leaderboards.submit(LB_WINS, progress.get('runs') + 1);
     progress.patch({ best, runs: progress.get('runs') + 1, unlocked: Math.max(was, Math.min(WORLDS.length, wi + 2)) });
+    submitScore();
     const opened = progress.get('unlocked') > was;
     const stars = falls <= 3 ? 3 : falls <= 10 ? 2 : 1;
     setTimeout(() => finishOpen && hud.showFinish({

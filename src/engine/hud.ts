@@ -144,6 +144,7 @@ export class Hud {
 
   showMenu(o: MenuOpts, onPlay: () => void): void {
     this.overlay.style.visibility = '';
+    this.overlay.classList.remove('finish');
     this.overlay.innerHTML = '';
     const box = el('div', 'hud-menu');
     // логотип — картинка (нарисована Codex); не загрузилась — остаётся текстовый заголовок
@@ -170,6 +171,7 @@ export class Hud {
 
   showFinish(f: FinishStats, onNext: () => void): void {
     this.overlay.style.visibility = '';
+    this.overlay.classList.add('finish');
     this.overlay.innerHTML = '';
     const card = el('div', 'hud-card');
     card.innerHTML = `<h2>${f.title}</h2><div class="stars">${'⭐'.repeat(f.stars)}${'<span class="off">⭐</span>'.repeat(3 - f.stars)}</div><div class="line">${f.line}</div>`;
@@ -274,6 +276,8 @@ function injectCss(): void {
 .hud-set-ok{min-width:0 !important;align-self:center;font-size:max(16px,calc(var(--u)*22)) !important;min-height:max(44px,calc(var(--u)*52)) !important}
 .hud-overlay{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:linear-gradient(rgba(30,90,200,.35),rgba(10,20,40,.55))}
 .hud-overlay.on{display:flex}
+/* карточка финиша: фон не ловит нажатия — 🏠 под ним остаётся рабочей (перекрывал её) */
+.hud-overlay.finish{pointer-events:none}.hud-overlay.finish .hud-card{pointer-events:auto}
 .hud-menu{display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*18)}
 .hud-logo{text-align:center;transform:rotate(-2deg);margin-bottom:calc(var(--u)*10)}
 .hud-logo img{display:block;width:min(calc(var(--u)*620),86vw);max-height:38vh;object-fit:contain;filter:drop-shadow(0 calc(var(--u)*8) calc(var(--u)*10) rgba(0,0,0,.35))}.hud-logo:not(.img) img,.hud-logo.img .l1,.hud-logo.img .l2{display:none}
