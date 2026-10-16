@@ -6,6 +6,7 @@ import '@fontsource/rubik/latin-900.css';
 import { safeInsets } from 'yg-core';
 import { coinIconUrl } from './textures.ts';
 import { L } from '../i18n.ts';
+import { installTap } from './tap.ts';
 
 let coinUrl = '';
 
@@ -65,6 +66,7 @@ export class Hud {
   private homeBtn: HTMLButtonElement;
 
   constructor(parent: HTMLElement) {
+    installTap();
     injectCss();
     this.root = el('div', 'hud');
     this.stageEl = el('div', 'hud-pill hud-stage');
@@ -167,6 +169,7 @@ export class Hud {
   }
 
   showFinish(f: FinishStats, onNext: () => void): void {
+    this.overlay.style.visibility = '';
     this.overlay.innerHTML = '';
     const card = el('div', 'hud-card');
     card.innerHTML = `<h2>${f.title}</h2><div class="stars">${'⭐'.repeat(f.stars)}${'<span class="off">⭐</span>'.repeat(3 - f.stars)}</div><div class="line">${f.line}</div>`;
@@ -187,6 +190,8 @@ export class Hud {
     this.overlay.appendChild(card);
     this.overlay.classList.add('on');
   }
+
+  closeOverlay(): void { this.overlay.classList.remove('on'); this.overlay.innerHTML = ''; }
 
   /** Спрятать меню, не начиная игру (поверх откроется магазин). menuOpen остаётся true. */
   hideMenu(): void { this.overlay.style.visibility = 'hidden'; }
@@ -250,6 +255,8 @@ function injectCss(): void {
 .hud-bar{position:absolute;left:calc(var(--l) + var(--u)*14);top:calc(var(--t) + var(--u)*62);width:calc(var(--u)*230);height:calc(var(--u)*11);border-radius:8px;background:rgba(20,28,40,.6);overflow:hidden;border:2px solid rgba(255,255,255,.65)}
 .hud-bar i{display:block;height:100%;width:0;background:linear-gradient(#7cf08f,#2fb04a);transition:width .5s}
 .hud-home{top:calc(var(--t) + var(--u)*68) !important}
+.hud-gear::before{content:"";position:absolute;inset:-10px}
+.hud-sb,.hud-play{position:relative}.hud-sb::before,.hud-play::before{content:"";position:absolute;inset:-8px}
 .hud-coins{right:calc(var(--r) + var(--u)*76);top:calc(var(--t) + var(--u)*12)}
 .hud-gear{position:absolute;right:calc(var(--r) + var(--u)*14);top:calc(var(--t) + var(--u)*12);width:max(44px,calc(var(--u)*48));height:max(44px,calc(var(--u)*48));border:0;border-radius:calc(var(--u)*14);background:rgba(20,28,40,.72);font-size:max(16px,calc(var(--u)*24));pointer-events:auto;cursor:pointer}
 .hud-toast{position:absolute;left:50%;top:22%;transform:translate(-50%,0) scale(.4) rotate(-3deg);opacity:0;font-weight:900;font-size:max(18px,min(calc(var(--u)*46),7vw));color:#ffe14d;text-shadow:0 calc(var(--u)*4) 0 #b05a00,0 0 18px rgba(0,0,0,.35);white-space:nowrap}

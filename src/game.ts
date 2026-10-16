@@ -185,6 +185,7 @@ export function createScene(parent: HTMLElement): Game {
   let runTime = 0, falls = 0, runCoins = 0, coinFrac = 0, chutes = 0, stageFalls = 0;
   /** На время рекламы игра стоит (звук глушит каркас). */
   let adPaused = false;
+  let finishOpen = false;
   /** DEV: камера следит не за игроком, а за этой точкой (съёмка роликов — за ботом). */
   let camTarget: THREE.Vector3 | null = null;
   const withAd = async <T,>(show: () => Promise<T>): Promise<T> => {
@@ -354,7 +355,7 @@ export function createScene(parent: HTMLElement): Game {
     progress.patch({ best, runs: progress.get('runs') + 1, unlocked: Math.max(was, Math.min(WORLDS.length, wi + 2)) });
     const opened = progress.get('unlocked') > was;
     const stars = falls <= 3 ? 3 : falls <= 10 ? 2 : 1;
-    setTimeout(() => hud.showFinish({
+    setTimeout(() => finishOpen && hud.showFinish({
       title: record ? L('НОВЫЙ РЕКОРД!', 'NEW RECORD!') : L('ТЫ ПРОШЁЛ!', 'YOU MADE IT!'), stars,
       line: `⏱ ${fmtTime(runTime)}   💀 ${falls}   ${coinHtml()} +${runCoins}${opened ? `<br>🔓 ${L('Открыт мир', 'Unlocked')} ${WORLDS[wi + 1].name}!` : ''}`,
       next: L('В ХАБ', 'TO HUB'),
@@ -364,10 +365,14 @@ export function createScene(parent: HTMLElement): Game {
         addCoins(got); sfx.play('coin', 0);
         return true;
       } },
-    }, () => void withAd(interstitialBetweenLevels).then(enterHub)), 1400);
+    }, () => { finishOpen = false; void withAd(interstitialBetweenLevels).then(enterHub); }), 600);
+    finishOpen = true;
   };
 
-  hud.onHome = () => { if (mode === 'run') { sfx.play('click', 0); mode = 'hub'; void withAd(interstitialBetweenLevels).then(enterHub); } };
+  hud.onHome = () => {
+    // карточка финиша открыта (или вот-вот появится) — 🏠 тоже ведёт в хаб, а не молчит
+    if (finishOpen) { finishOpen = false; hud.closeOverlay(); sfx.play('click', 0); enterHub(); return; }
+    if (mode === 'run') { sfx.play('click', 0); mode = 'hub'; void withAd(interstitialBetweenLevels).then(enterHub); } };
 
   const openMenu = () => {
     mode = 'menu';
@@ -551,6 +556,8 @@ export function createScene(parent: HTMLElement): Game {
         const mat = (o as THREE.Mesh).material as THREE.MeshStandardMaterial | THREE.MeshStandardMaterial[] | undefined;
         for (const m of mat ? (Array.isArray(mat) ? mat : [mat]) : []) for (const tx of [m.map, m.emissiveMap]) if (tx) renderer.initTexture(tx);
       });
+      // превью всех лавок — сейчас, а не при первом входе (подвисание на телефоне)
+      for (const sh of Object.values(shops)) sh.prepare();
       onProgress(0.4);
       await sfx.load();
       onProgress(0.6);

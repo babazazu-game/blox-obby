@@ -87,6 +87,10 @@ export class Shop {
     parent.appendChild(this.el);
   }
 
+  /** Превью товаров заранее (на экране загрузки): иначе первый вход в лавку
+   *  подвисал на телефоне — отдельный WebGL-контекст и десятки аватаров разом. */
+  prepare(): void { renderPreviews(this.items); }
+
   open(): void {
     renderPreviews(this.items);
     this.render();
@@ -188,8 +192,9 @@ function injectCss(): void {
 .shop-coins{font-size:max(16px,calc(var(--u)*24));color:#1b2433}
 .shop i{font-style:normal;color:#ffb800}
 .shop-x{position:absolute;right:calc(var(--u)*12);top:calc(var(--u)*12);width:max(44px,calc(var(--u)*46));height:max(44px,calc(var(--u)*46));border:0;border-radius:50%;background:#e8403a;color:#fff;font:900 max(18px,calc(var(--u)*22)) Rubik,Arial;cursor:pointer;box-shadow:0 4px 0 #a82a22}
-.shop-nav{display:flex;align-items:center;gap:calc(var(--u)*8);font-weight:900;font-size:max(14px,calc(var(--u)*18));color:#1b2433}
-.shop-nav button{width:max(40px,calc(var(--u)*42));height:max(36px,calc(var(--u)*36));border:0;border-radius:calc(var(--u)*10);background:#3d8cf0;color:#fff;font:900 max(14px,calc(var(--u)*16)) Rubik,Arial;box-shadow:0 4px 0 #1f5fb8;cursor:pointer}
+.shop-x::before,.shop-nav button::before{content:"";position:absolute;inset:-14px}
+.shop-nav{display:flex;white-space:nowrap;align-items:center;gap:calc(var(--u)*8);font-weight:900;font-size:max(14px,calc(var(--u)*18));color:#1b2433}
+.shop-nav button{position:relative;width:max(40px,calc(var(--u)*42));height:max(36px,calc(var(--u)*36));border:0;border-radius:calc(var(--u)*10);background:#3d8cf0;color:#fff;font:900 max(14px,calc(var(--u)*16)) Rubik,Arial;box-shadow:0 4px 0 #1f5fb8;cursor:pointer}
 .shop-nav button:disabled{opacity:.35}
 .shop-grid{flex:1;min-height:0;overflow:hidden;display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));grid-template-rows:repeat(var(--rows),minmax(0,1fr));gap:calc(var(--u)*10);padding:calc(var(--u)*4)}
 .shop-card{min-height:0;display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*3);padding:calc(var(--u)*6);border-radius:calc(var(--u)*16);background:linear-gradient(#e9f3ff,#cfe3ff);border:3px solid transparent}
